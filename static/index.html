@@ -175,10 +175,16 @@
             margin-bottom: 8px;
         }
 
-        .now-playing-text {
-            font-size: 18px;
-            font-weight: 500;
-            color: #333;
+        .now-playing-genre {
+            font-size: 24px;
+            font-weight: 600;
+            color: #5D4E3C;
+            margin-bottom: 4px;
+        }
+
+        .now-playing-details {
+            font-size: 14px;
+            color: #8B7355;
         }
 
         /* Playback Controls */
@@ -588,7 +594,8 @@
                     </div>
                     <div class="now-playing">
                         <div class="now-playing-label">Now Playing</div>
-                        <div class="now-playing-text" id="nowPlaying">House, TR-909 Drums, Deep Bass, Groovy</div>
+                        <div class="now-playing-genre" id="nowPlayingGenre">House</div>
+                        <div class="now-playing-details" id="nowPlayingDetails">TR-909 Drums, Deep Bass, Groovy</div>
                     </div>
                 </div>
 
@@ -789,7 +796,8 @@
         const connectBtn = document.getElementById('connectBtn');
         const promptInput = document.getElementById('promptInput');
         const updateStationBtn = document.getElementById('updateStationBtn');
-        const nowPlaying = document.getElementById('nowPlaying');
+        const nowPlayingGenre = document.getElementById('nowPlayingGenre');
+        const nowPlayingDetails = document.getElementById('nowPlayingDetails');
         const debugLog = document.getElementById('debugLog');
         const statusToast = document.getElementById('statusToast');
         const visualizerCanvas = document.getElementById('visualizerCanvas');
@@ -977,6 +985,15 @@
             }
 
             requestAnimationFrame(animateVisualizer);
+        }
+
+        // Update now playing display
+        function updateNowPlaying(prompt) {
+            const parts = prompt.split(',').map(p => p.trim());
+            const genre = parts[0] || 'Unknown';
+            const details = parts.slice(1).join(', ') || '';
+            nowPlayingGenre.textContent = genre;
+            nowPlayingDetails.textContent = details;
         }
 
         // Log message
@@ -1356,7 +1373,7 @@
 
         updateStationBtn.addEventListener('click', () => {
             const prompt = promptInput.value;
-            nowPlaying.textContent = prompt;
+            updateNowPlaying(prompt);
             log(`Updating prompt to: "${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}"...`);
             sendUpdate(getCurrentConfig());
         });
@@ -1466,7 +1483,7 @@
 
                 // Update prompt
                 promptInput.value = prompt;
-                nowPlaying.textContent = prompt;
+                updateNowPlaying(prompt);
 
                 // Build update config
                 const updateConfig = { prompt: prompt };
