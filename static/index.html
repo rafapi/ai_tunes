@@ -925,7 +925,7 @@
                     canvasCtx.lineWidth = 1.5 + (1 - layerRatio) * 2;
                     canvasCtx.beginPath();
 
-                    const amplitude = (0.3 + avgAmplitude * 0.7) * (60 + layer * 5);
+                    const amplitude = (0.4 + avgAmplitude * 1.5) * (70 + layer * 8);
                     const phaseOffset = layer * 0.3 + animationPhase;
 
                     for (let i = 0; i < samples; i++) {
@@ -955,12 +955,12 @@
                 canvasCtx.beginPath();
 
                 const currentData = waveHistory[0];
-                const centerAmplitude = 0.3 + avgAmplitude * 0.7;
+                const centerAmplitude = 0.5 + avgAmplitude * 1.5;
 
                 for (let i = 0; i < samples; i++) {
                     const x = (i / (samples - 1)) * width;
                     const dataValue = (currentData[i] - 128) / 128;
-                    const y = centerY + dataValue * 50 * centerAmplitude;
+                    const y = centerY + dataValue * 70 * centerAmplitude;
 
                     if (i === 0) {
                         canvasCtx.moveTo(x, y);
