@@ -607,6 +607,15 @@
                         </svg>
                     </button>
                     <button class="control-btn play-btn" id="playBtn" title="Play/Pause">▶</button>
+                    <button class="control-btn" id="shuffleBtn" title="Shuffle Genre">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 3h5v5"/>
+                            <path d="M4 20L21 3"/>
+                            <path d="M21 16v5h-5"/>
+                            <path d="M15 15l6 6"/>
+                            <path d="M4 4l5 5"/>
+                        </svg>
+                    </button>
                 </div>
 
                 <!-- Bottom Grid -->
@@ -779,6 +788,7 @@
         const onAirDot = document.getElementById('onAirDot');
         const playBtn = document.getElementById('playBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const shuffleBtn = document.getElementById('shuffleBtn');
         const apiKeyInput = document.getElementById('apiKeyInput');
         const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
         const apiKeyInputRow = document.getElementById('apiKeyInputRow');
@@ -1367,6 +1377,22 @@
             updateNowPlaying(prompt);
             log(`Updating prompt to: "${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}"...`);
             sendUpdate(getCurrentConfig());
+        });
+
+        shuffleBtn.addEventListener('click', () => {
+            const genreTags = document.querySelectorAll('.genre-tag');
+            const currentActive = document.querySelector('.genre-tag.active');
+
+            // Filter out current genre to avoid picking the same one
+            let availableTags = Array.from(genreTags);
+            if (currentActive && availableTags.length > 1) {
+                availableTags = availableTags.filter(t => t !== currentActive);
+            }
+
+            // Pick random genre and click it
+            const randomTag = availableTags[Math.floor(Math.random() * availableTags.length)];
+            randomTag.click();
+            log(`Shuffled to ${randomTag.dataset.genre}`);
         });
 
         // Slider listeners
