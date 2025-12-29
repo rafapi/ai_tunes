@@ -43,9 +43,12 @@ class MusicSession:
         self._receive_task: Optional[asyncio.Task] = None
         self._websocket = None
         self.current_config = {
-            "prompt": "Deep house with warm bass, four-on-the-floor beat, soulful chords, groovy and uplifting",
-            "bpm": 124,
-            "density": 0.55,  # Moderate density (0.1=sparse, 0.9=chaotic)
+            "prompt": (
+                "Cinematic score with 100-piece orchestra, soaring strings, heroic brass fanfares, "
+                "thunderous percussion, sweeping crescendos, blockbuster mix crafted for trailer moments"
+            ),
+            "bpm": 90,
+            "density": 0.5,  # Moderate density (0.1=sparse, 0.9=chaotic)
             "brightness": 0.5,
             "guidance": 5.0,  # Higher guidance to follow prompt more closely
             "temperature": 1.0,  # Default per Lyria guide
@@ -54,6 +57,7 @@ class MusicSession:
             "mute_bass": False,
             "mute_drums": False,
             "only_bass_and_drums": False,
+            "negative_prompt": "No vocals, no glitch artifacts, no harsh cymbal wash",
         }
 
     async def connect(self) -> bool:
@@ -108,7 +112,10 @@ class MusicSession:
         if not self.session:
             return
 
-        prompt_text = self.current_config["prompt"]
+        prompt_text = self.current_config["prompt"].strip()
+        negative_prompt = self.current_config.get("negative_prompt", "").strip()
+        if negative_prompt:
+            prompt_text = f"{prompt_text}. Avoid: {negative_prompt}"
         prompts = [types.WeightedPrompt(text=prompt_text, weight=1.0)]
         await self.session.set_weighted_prompts(prompts=prompts)
 
@@ -131,8 +138,8 @@ class MusicSession:
                 # Apply config changes
                 await self._apply_config()
 
-                # Apply prompt if it changed
-                if "prompt" in kwargs:
+                # Apply prompt if it or the negative prompt changed
+                if "prompt" in kwargs or "negative_prompt" in kwargs:
                     await self._apply_prompts()
 
                 # Reset context if needed for BPM/scale changes

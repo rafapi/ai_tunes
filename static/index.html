@@ -587,15 +587,15 @@
                 <!-- Audio Visualizer -->
                 <div class="card visualizer-card">
                     <div class="visualizer-header">
-                        <span class="bpm-display"><span id="bpmValue">124</span> BPM</span>
+                        <span class="bpm-display"><span id="bpmValue">90</span> BPM</span>
                     </div>
                     <div class="visualizer">
                         <canvas id="visualizerCanvas"></canvas>
                     </div>
                     <div class="now-playing">
                         <div class="now-playing-label">Now Playing</div>
-                        <div class="now-playing-genre" id="nowPlayingGenre">Deep house</div>
-                        <div class="now-playing-details" id="nowPlayingDetails">warm bass, four-on-the-floor beat, soulful chords, groovy and uplifting</div>
+                        <div class="now-playing-genre" id="nowPlayingGenre">Cinematic score with 100-piece orchestra</div>
+                        <div class="now-playing-details" id="nowPlayingDetails">soaring strings, heroic brass fanfares, thunderous percussion, sweeping crescendos, blockbuster mix crafted for trailer moments</div>
                     </div>
                 </div>
 
@@ -627,17 +627,17 @@
                         <div class="slider-group">
                             <div class="slider-header">
                                 <span class="slider-label">BPM</span>
-                                <span class="slider-value" id="bpmSliderValue">124</span>
+                                <span class="slider-value" id="bpmSliderValue">90</span>
                             </div>
-                            <input type="range" class="slider" id="bpmSlider" min="60" max="200" value="124">
+                            <input type="range" class="slider" id="bpmSlider" min="60" max="200" value="90">
                         </div>
 
                         <div class="slider-group">
                             <div class="slider-header">
                                 <span class="slider-label">Density</span>
-                                <span class="slider-value" id="densityValue">55%</span>
+                                <span class="slider-value" id="densityValue">50%</span>
                             </div>
-                            <input type="range" class="slider" id="densitySlider" min="10" max="90" value="55">
+                            <input type="range" class="slider" id="densitySlider" min="10" max="90" value="50">
                         </div>
 
                         <div class="slider-group">
@@ -733,33 +733,30 @@
                 <!-- Prompt -->
                 <div class="card">
                     <div class="card-header">🎤 Prompt</div>
-                    <textarea class="prompt-textarea" id="promptInput">Deep house with warm bass, four-on-the-floor beat, soulful chords, groovy and uplifting</textarea>
+                    <textarea class="prompt-textarea" id="promptInput">Cinematic score with 100-piece orchestra, soaring strings, heroic brass fanfares, thunderous percussion, sweeping crescendos, blockbuster mix crafted for trailer moments</textarea>
                     <button class="update-btn" id="updateStationBtn">Update Station</button>
+                </div>
+
+                <!-- Negative Prompt -->
+                <div class="card">
+                    <div class="card-header">🚫 Negative Prompt</div>
+                    <textarea class="prompt-textarea" id="negativePromptInput">No vocals, no glitch artifacts, no harsh cymbal wash</textarea>
                 </div>
 
                 <!-- Quick Genres -->
                 <div class="card">
                     <div class="card-header">✨ Quick Genres</div>
                     <div class="genres-grid" id="genresGrid">
-                        <button class="genre-tag" data-genre="Lo-Fi Hip Hop" data-prompt="Lo-fi hip hop with dusty vinyl crackle, mellow piano chords, warm analog sound, laid-back and nostalgic" data-bpm="85" data-density="40">Lo-Fi Hip Hop</button>
-                        <button class="genre-tag" data-genre="Techno" data-prompt="Dark techno with pounding TR-909 kicks, industrial atmosphere, driving and relentless energy" data-bpm="128" data-density="60">Techno</button>
-                        <button class="genre-tag" data-genre="House" data-prompt="Deep house with warm bass, four-on-the-floor beat, soulful chords, groovy and uplifting" data-bpm="124" data-density="55">House</button>
-                        <button class="genre-tag" data-genre="Ambient" data-prompt="Ambient electronic with ethereal synth pads, reverb-drenched textures, peaceful and contemplative" data-bpm="70" data-density="25">Ambient</button>
-                        <button class="genre-tag" data-genre="Afrobeat" data-prompt="Afrobeat with polyrhythmic percussion, danceable groove, warm and energetic" data-bpm="120" data-density="50">Afrobeat</button>
-                        <button class="genre-tag" data-genre="Disco" data-prompt="Disco with funky bass, lush strings, four-on-the-floor beat, uplifting and joyful" data-bpm="120" data-density="60">Disco</button>
-                        <button class="genre-tag" data-genre="Bossa Nova" data-prompt="Bossa nova with nylon guitar, soft brushed drums, intimate and romantic, warm production" data-bpm="80" data-density="35">Bossa Nova</button>
-                        <button class="genre-tag" data-genre="Synthwave" data-prompt="Synthwave with lush analog synths, arpeggiated patterns, retro 80s nostalgia, dreamy and cinematic" data-bpm="118" data-density="50">Synthwave</button>
-                        <button class="genre-tag" data-genre="Drum and Bass" data-prompt="Drum and bass with fast breakbeats, deep rolling bass, intense and energetic, crisp production" data-bpm="174" data-density="70">Drum and Bass</button>
-                        <button class="genre-tag" data-genre="Dub" data-prompt="Dub with heavy bass, spacious reverb, echoing delays, hypnotic and meditative" data-bpm="75" data-density="40">Dub</button>
-                        <button class="genre-tag" data-genre="Funk" data-prompt="Funk with tight clavinet, slap bass, syncopated rhythm, groovy and infectious" data-bpm="105" data-density="55">Funk</button>
-                        <button class="genre-tag" data-genre="Chillout" data-prompt="Chillout with warm Rhodes piano, soft pads, gentle melodies, relaxing and serene" data-bpm="95" data-density="35">Chillout</button>
-                        <button class="genre-tag" data-genre="Acid" data-prompt="Acid house with squelchy TB-303, hypnotic patterns, dark and trippy atmosphere" data-bpm="130" data-density="50">Acid</button>
-                        <button class="genre-tag" data-genre="Trance" data-prompt="Trance with soaring supersaw synths, building arpeggios, euphoric and uplifting energy" data-bpm="138" data-density="60">Trance</button>
-                        <button class="genre-tag" data-genre="Jazz Fusion" data-prompt="Jazz fusion with Fender Rhodes, complex harmonies, sophisticated and smooth, warm mix" data-bpm="95" data-density="45">Jazz Fusion</button>
-                        <button class="genre-tag" data-genre="Focus" data-prompt="Ambient with soft pads, gentle textures, minimal and calm, perfect for concentration" data-bpm="80" data-density="25">Focus</button>
-                        <button class="genre-tag" data-genre="Pop" data-prompt="Pop with bright synths, punchy drums, catchy melodies, polished and energetic production" data-bpm="118" data-density="55">Pop</button>
-                        <button class="genre-tag" data-genre="Classical" data-prompt="Classical orchestral with sweeping strings, elegant piano, rich woodwinds, emotional and cinematic, warm concert hall sound" data-bpm="72" data-density="45">Classical</button>
-                        <button class="genre-tag" data-genre="Hard Rock" data-prompt="Hard rock with distorted electric guitars, powerful drums, driving bass, raw and energetic, punchy stadium sound" data-bpm="130" data-density="70">Hard Rock</button>
+                        <button class="genre-tag" data-genre="Cinematic Score" data-prompt="Cinematic score with 100-piece orchestra, soaring strings, heroic brass fanfares, thunderous percussion, sweeping crescendos, blockbuster mix crafted for trailer moments" data-bpm="90" data-density="50">Cinematic Score</button>
+                        <button class="genre-tag" data-genre="Beethoven Symphony" data-prompt="Classical orchestra with sweeping strings, bold woodwinds, timpani swells, Beethoven-inspired motifs, dramatic dynamic shifts, captured in a grand concert hall" data-bpm="72" data-density="45">Beethoven Symphony</button>
+                        <button class="genre-tag" data-genre="Ambient Focus" data-prompt="Ambient electronic with slow-evolving pads, airy textures, soft pulses, meditative and weightless, spatial mix designed for mindfulness breathwork" data-bpm="70" data-density="25">Ambient Focus</button>
+                        <button class="genre-tag" data-genre="Lo-Fi Study" data-prompt="Lo-fi hip hop with dusty MPC drums, detuned Rhodes chords, vinyl crackle, mellow and nostalgic, cassette master built for late-night study sessions" data-bpm="85" data-density="40">Lo-Fi Study</button>
+                        <button class="genre-tag" data-genre="Deep House" data-prompt="Deep house with warm Moog bass, four-on-the-floor groove, soulful piano stabs, uplifting and hypnotic, polished analog mix engineered for sunset rooftop DJ sets" data-bpm="124" data-density="55">Deep House</button>
+                        <button class="genre-tag" data-genre="Indie Electronic" data-prompt="Indie electronic with jangly guitars, analog synth arpeggios, tight live drums, dreamy yet danceable, festival-ready mix crafted for indie dance sets" data-bpm="118" data-density="50">Indie Electronic</button>
+                        <button class="genre-tag" data-genre="Warehouse Techno" data-prompt="Warehouse techno with pounding TR-909 kicks, metallic percussion, dark rave stabs, relentless and hypnotic, club-ready master tuned for peak-hour warehouse sets" data-bpm="130" data-density="65">Warehouse Techno</button>
+                        <button class="genre-tag" data-genre="Festival Trance" data-prompt="Festival trance with supersaw leads, rolling basslines, building arpeggios, euphoric breakdowns, pristine festival master crafted for hands-up mainstage moments" data-bpm="138" data-density="60">Festival Trance</button>
+                        <button class="genre-tag" data-genre="Dub" data-prompt="Dub with heavyweight bass, tape-delay skanks, spring reverb splashes, hypnotic and spacious, analog desk mix tailored for late-night sound system sessions" data-bpm="75" data-density="35">Dub</button>
+                        <button class="genre-tag" data-genre="Jazz Fusion" data-prompt="Jazz fusion with Fender Rhodes comping, fretless bass grooves, brushed drums, sophisticated yet soulful, warm studio mix tailored for upscale cocktail lounges" data-bpm="100" data-density="45">Jazz Fusion</button>
                     </div>
                 </div>
             </div>
@@ -798,6 +795,7 @@
         const changeKeyBtn = document.getElementById('changeKeyBtn');
         const connectBtn = document.getElementById('connectBtn');
         const promptInput = document.getElementById('promptInput');
+        const negativePromptInput = document.getElementById('negativePromptInput');
         const updateStationBtn = document.getElementById('updateStationBtn');
         const nowPlayingGenre = document.getElementById('nowPlayingGenre');
         const nowPlayingDetails = document.getElementById('nowPlayingDetails');
@@ -1090,7 +1088,7 @@
                 case 'updated':
                     log('Config updated', 'success');
                     // Only show "Prompt updated" if we actually updated the prompt
-                    if (pendingUpdate && pendingUpdate.prompt) {
+                    if (pendingUpdate && (pendingUpdate.prompt || pendingUpdate.negative_prompt)) {
                         log('Prompt updated - music will transition', 'success');
                     }
                     pendingUpdate = null;  // Clear pending update
@@ -1270,6 +1268,7 @@
         function getCurrentConfig() {
             return {
                 prompt: promptInput.value,
+                negative_prompt: negativePromptInput.value,
                 bpm: parseInt(bpmSlider.value),
                 density: parseInt(densitySlider.value) / 100,
                 brightness: parseInt(brightnessSlider.value) / 100,
