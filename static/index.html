@@ -814,7 +814,7 @@
         // Wave history for smooth animation
         let waveHistory = [];
         const WAVE_LAYERS = 8;
-        const HISTORY_SIZE = 12;
+        const HISTORY_SIZE = 16; // More history for smoother trails
         let animationPhase = 0;
 
         // Initialize visualizer canvas
@@ -902,7 +902,7 @@
                     waveHistory.pop();
                 }
 
-                animationPhase += 0.02;
+                animationPhase += 0.012; // Slower phase for smoother flow
 
                 // Draw multiple wave layers
                 for (let layer = WAVE_LAYERS - 1; layer >= 0; layer--) {
@@ -1105,7 +1105,7 @@
             if (!analyserNode) {
                 analyserNode = audioContext.createAnalyser();
                 analyserNode.fftSize = 2048; // More bins for better log-frequency resolution
-                analyserNode.smoothingTimeConstant = 0.7;
+                analyserNode.smoothingTimeConstant = 0.85; // Smoother transitions
                 analyserNode.connect(audioContext.destination);
             }
             if (!outputNode) {
