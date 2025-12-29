@@ -2,16 +2,107 @@
 
 Real-time AI music generation web app powered by Google's Lyria Realtime API.
 
-## Features
+## Architecture
 
-- **Real-time music generation** using Google's Lyria model
-- **Quick genre selection** with optimized prompts and BPM settings
-- **Live controls**: BPM, Density, Brightness, Guidance, Temperature
-- **Mix options**: Mute Bass, Mute Drums, Only Bass & Drums
-- **Scale selection**: Choose musical key or let the model decide
-- **Generation modes**: Quality (coherent) vs Diversity (varied)
-- **Audio visualizer** with live waveform display
-- **Debug log** for monitoring generation status
+```
+┌─────────────────┐     WebSocket      ┌─────────────────┐
+│                 │◄──────────────────►│                 │
+│  Browser        │   JSON messages    │  FastAPI        │
+│  (Web Audio)    │   + base64 PCM     │  Server         │
+│                 │                    │                 │
+└─────────────────┘                    └────────┬────────┘
+                                                │
+                                                │ gRPC streaming
+                                                │
+                                       ┌────────▼────────┐
+                                       │  Google Lyria   │
+                                       │  Realtime API   │
+                                       │  (v1alpha)      │
+                                       └─────────────────┘
+```
+
+## Audio Pipeline
+
+### Backend → Frontend
+- **Format**: 16-bit signed PCM, 48kHz sample rate, stereo interleaved
+- **Transport**: Base64-encoded chunks over WebSocket JSON messages
+- **Chunk size**: Variable, typically ~4096 samples per channel
+
+### Frontend Audio Processing
+```
+AudioContext (48kHz)
+    │
+    ▼
+BufferSource ──► GainNode ──► AnalyserNode ──► Destination
+                (volume)      (FFT data)       (speakers)
+```
+
+- **Buffer strategy**: 5-second lookahead buffer before playback starts
+- **Scheduling**: Gapless playback via `AudioBufferSourceNode.start(nextStartTime)`
+- **Underrun handling**: Automatic rebuffering on buffer underrun detection
+
+### Frequency Visualizer
+- **FFT size**: 2048 (1024 frequency bins)
+- **Frequency mapping**: Logarithmic scale, 20Hz–16kHz across 64 bars
+- **Bin aggregation**: Multiple FFT bins averaged per visual bar for perceptually uniform distribution
+- **Color mapping**: HSL-based rainbow spectrum, saturation/lightness modulated by amplitude
+
+## WebSocket Protocol
+
+### Client → Server
+
+```json
+{"action": "init", "api_key": "...", "config": {...}}
+{"action": "play"}
+{"action": "pause"}
+{"action": "stop"}
+{"action": "update", "config": {"bpm": 120, "density": 0.5, ...}}
+{"action": "disconnect"}
+```
+
+### Server → Client
+
+```json
+{"type": "connected", "config": {...}}
+{"type": "playing"}
+{"type": "paused"}
+{"type": "stopped"}
+{"type": "updated", "config": {...}}
+{"type": "audio", "data": "<base64 PCM>"}
+{"type": "filtered", "reason": "...", "text": "..."}
+{"type": "error", "message": "..."}
+{"type": "log", "message": "..."}
+```
+
+## Lyria API Integration
+
+### Session Lifecycle
+```python
+client = genai.Client(api_key=key, http_options={"api_version": "v1alpha"})
+async with client.aio.live.music.connect(model="models/lyria-realtime-exp") as session:
+    await session.set_weighted_prompts(prompts=[...])
+    await session.set_music_generation_config(config=...)
+    await session.play()
+    async for message in session.receive():
+        # Process audio chunks
+```
+
+### Configuration Parameters
+
+| Parameter | Range | Notes |
+|-----------|-------|-------|
+| `bpm` | 60–200 | Requires `reset_context()` on change |
+| `density` | 0.0–1.0 | 0.1=sparse, 0.5=balanced, 0.9=chaotic |
+| `brightness` | 0.0–1.0 | Tonal brightness |
+| `guidance` | 1.0–6.0 | Prompt adherence strength |
+| `temperature` | 0.0–3.0 | Output randomness |
+| `scale` | enum | Musical key, requires `reset_context()` |
+| `music_generation_mode` | QUALITY/DIVERSITY | Coherence vs variation tradeoff |
+
+### Prompt Format
+Prompts follow the formula: `[Genre] + [Instrumentation] + [Atmosphere]`
+
+Example: `"Techno, TR-909 Drum Machine, 303 Acid Bass, Driving"`
 
 ## Requirements
 
@@ -21,77 +112,33 @@ Real-time AI music generation web app powered by Google's Lyria Realtime API.
 
 ## Setup
 
-1. Install dependencies:
-   ```bash
-   uv sync
-   ```
+```bash
+uv sync
+uv run python main.py
+```
 
-2. Run the server:
-   ```bash
-   uv run python main.py
-   ```
+Open http://localhost:8000
 
-3. Open http://localhost:8000 in your browser
+## Dependencies
 
-4. Enter your Gemini API key and click Save
-
-5. Click Play to start generating music
-
-## Getting a Gemini API Key
-
-1. Go to [Google AI Studio](https://aistudio.google.com/apikey)
-2. Create or select a project
-3. Generate an API key
-4. Note: Lyria Realtime is experimental and may require waitlist access
-
-## Tech Stack
-
-- **Backend**: FastAPI + WebSocket
-- **Frontend**: Vanilla HTML/CSS/JavaScript
-- **Audio**: Web Audio API with 2-second buffer
-- **AI**: Google GenAI Python SDK (v1alpha)
+| Package | Purpose |
+|---------|---------|
+| `fastapi` | HTTP server + WebSocket |
+| `uvicorn` | ASGI server |
+| `google-genai` | Lyria API client |
+| `websockets` | WebSocket support |
+| `python-multipart` | Form data parsing |
 
 ## Project Structure
 
 ```
 ai_tunes/
-├── main.py              # FastAPI server + Lyria integration
+├── main.py              # FastAPI server, Lyria session management
 ├── static/
-│   └── index.html       # Frontend (HTML/CSS/JS)
-├── pyproject.toml       # Python dependencies
-├── CLAUDE.md            # Development instructions
-├── SCRATCHPAD.md        # Work log and TODO items
-└── README.md            # This file
+│   └── index.html       # SPA frontend (HTML/CSS/JS)
+├── pyproject.toml       # Dependencies
+└── uv.lock              # Locked dependencies
 ```
-
-## Available Genres
-
-| Genre | BPM | Style |
-|-------|-----|-------|
-| Ambient | 70 | Atmospheric, peaceful |
-| Reggae | 75 | Offbeat, laid back |
-| Bossa Nova | 80 | Brazilian jazz |
-| Lo-Fi Hip Hop | 85 | Chill, boom bap |
-| R&B | 90 | Smooth, soulful |
-| Soul | 95 | Motown, warm |
-| Funk | 105 | Syncopated, groovy |
-| Afrobeat | 110 | Percussive, danceable |
-| Synthwave | 118 | Retro 80s |
-| Disco | 120 | Funky, dance |
-| Pop | 120 | Catchy, bright |
-| House | 124 | Four on the floor |
-| Techno | 128 | Driving, electronic |
-| Drum and Bass | 174 | Fast breakbeats |
-
-## Controls Reference
-
-- **BPM** (60-180): Beats per minute - requires context reset
-- **Density** (0-100%): Note/instrument density
-- **Brightness** (0-100%): Tonal brightness
-- **Guidance** (1-6): How strictly to follow the prompt
-- **Temperature** (0-3): Randomness/variety in output
-- **Scale**: Musical key - requires context reset
-- **Mode**: Quality (coherent) vs Diversity (varied)
 
 ## License
 
