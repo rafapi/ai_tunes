@@ -147,17 +147,15 @@
         }
 
         .visualizer {
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
+            height: 180px;
+            background: linear-gradient(180deg, #1a0a2e 0%, #16082a 100%);
+            border-radius: 12px;
+            overflow: hidden;
         }
 
-        .visualizer-bar {
-            width: 4px;
-            border-radius: 2px;
-            transition: height 0.05s ease, background 0.1s ease;
+        .visualizer canvas {
+            width: 100%;
+            height: 100%;
         }
 
         /* Now Playing */
@@ -584,7 +582,9 @@
                     <div class="visualizer-header">
                         <span class="bpm-display"><span id="bpmValue">124</span> BPM</span>
                     </div>
-                    <div class="visualizer" id="visualizer"></div>
+                    <div class="visualizer">
+                        <canvas id="visualizerCanvas"></canvas>
+                    </div>
                     <div class="now-playing">
                         <div class="now-playing-label">Now Playing</div>
                         <div class="now-playing-text" id="nowPlaying">House, TR-909 Drums, Deep Bass, Groovy</div>
@@ -791,7 +791,8 @@
         const nowPlaying = document.getElementById('nowPlaying');
         const debugLog = document.getElementById('debugLog');
         const statusToast = document.getElementById('statusToast');
-        const visualizer = document.getElementById('visualizer');
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const canvasCtx = visualizerCanvas.getContext('2d');
 
         // Sliders
         const bpmSlider = document.getElementById('bpmSlider');
@@ -810,109 +811,168 @@
         const muteDrumsBtn = document.getElementById('muteDrumsBtn');
         const onlyBassAndDrumsBtn = document.getElementById('onlyBassAndDrumsBtn');
 
-        // Initialize visualizer bars
+        // Wave history for smooth animation
+        let waveHistory = [];
+        const WAVE_LAYERS = 8;
+        const HISTORY_SIZE = 12;
+        let animationPhase = 0;
+
+        // Initialize visualizer canvas
         function initVisualizer() {
-            visualizer.innerHTML = '';
-            for (let i = 0; i < 64; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'visualizer-bar';
-                bar.style.height = '4px';
-                // Initialize with rainbow colors (dimmed)
-                const hue = (i / 64) * 300;
-                bar.style.background = `hsl(${hue}, 30%, 70%)`;
-                visualizer.appendChild(bar);
+            const container = visualizerCanvas.parentElement;
+            const dpr = window.devicePixelRatio || 1;
+            visualizerCanvas.width = container.offsetWidth * dpr;
+            visualizerCanvas.height = container.offsetHeight * dpr;
+            canvasCtx.scale(dpr, dpr);
+
+            // Initialize wave history
+            waveHistory = [];
+            for (let i = 0; i < HISTORY_SIZE; i++) {
+                waveHistory.push(new Array(128).fill(128));
             }
+
+            // Draw initial idle state
+            drawIdleWave();
         }
 
-        // Compute logarithmic frequency bin mapping (called once)
-        function computeLogBinMapping(numBars, fftSize, sampleRate) {
-            const binCount = fftSize / 2;
-            const nyquist = sampleRate / 2;
-            const minFreq = 20;    // 20 Hz (lower limit of human hearing)
-            const maxFreq = 16000; // 16 kHz (reasonable upper limit)
+        // Draw idle wave (when not playing)
+        function drawIdleWave() {
+            const width = visualizerCanvas.width / (window.devicePixelRatio || 1);
+            const height = visualizerCanvas.height / (window.devicePixelRatio || 1);
 
-            const logMin = Math.log10(minFreq);
-            const logMax = Math.log10(maxFreq);
-            const logRange = logMax - logMin;
+            canvasCtx.fillStyle = '#1a0a2e';
+            canvasCtx.fillRect(0, 0, width, height);
 
-            const mapping = [];
-            for (let i = 0; i < numBars; i++) {
-                // Logarithmic frequency for this bar
-                const logFreq = logMin + (i / numBars) * logRange;
-                const freq = Math.pow(10, logFreq);
+            // Draw subtle idle line
+            const gradient = canvasCtx.createLinearGradient(0, 0, width, 0);
+            gradient.addColorStop(0, 'rgba(0, 255, 255, 0.3)');
+            gradient.addColorStop(0.5, 'rgba(255, 0, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 255, 255, 0.3)');
 
-                // Next bar's frequency
-                const logFreqNext = logMin + ((i + 1) / numBars) * logRange;
-                const freqNext = Math.pow(10, logFreqNext);
-
-                // Convert to FFT bin indices
-                const binStart = Math.floor(freq * binCount / nyquist);
-                const binEnd = Math.floor(freqNext * binCount / nyquist);
-
-                mapping.push({
-                    start: Math.max(0, binStart),
-                    end: Math.min(binCount - 1, Math.max(binStart + 1, binEnd))
-                });
-            }
-            return mapping;
+            canvasCtx.strokeStyle = gradient;
+            canvasCtx.lineWidth = 2;
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(0, height / 2);
+            canvasCtx.lineTo(width, height / 2);
+            canvasCtx.stroke();
         }
 
-        // Cache the bin mapping
-        let logBinMapping = null;
-
-        // Animate visualizer with real frequency data
+        // Animate visualizer with beautiful flowing waves
         function animateVisualizer() {
-            const bars = visualizer.querySelectorAll('.visualizer-bar');
+            const width = visualizerCanvas.width / (window.devicePixelRatio || 1);
+            const height = visualizerCanvas.height / (window.devicePixelRatio || 1);
+            const centerY = height / 2;
 
             if (!isPlaying) {
-                // Reset bars when not playing - dim colors
-                bars.forEach((bar, i) => {
-                    bar.style.height = '4px';
-                    const hue = (i / bars.length) * 300;
-                    bar.style.background = `hsl(${hue}, 30%, 70%)`;
-                });
+                drawIdleWave();
                 return;
             }
 
+            // Clear with dark background
+            canvasCtx.fillStyle = '#1a0a2e';
+            canvasCtx.fillRect(0, 0, width, height);
+
             if (analyserNode) {
-                // Initialize log mapping if needed
-                if (!logBinMapping) {
-                    logBinMapping = computeLogBinMapping(bars.length, analyserNode.fftSize, SAMPLE_RATE);
+                // Get time domain data for waveform
+                const timeData = new Uint8Array(analyserNode.fftSize);
+                analyserNode.getByteTimeDomainData(timeData);
+
+                // Also get frequency data for amplitude modulation
+                const freqData = new Uint8Array(analyserNode.frequencyBinCount);
+                analyserNode.getByteFrequencyData(freqData);
+
+                // Calculate overall amplitude
+                let avgAmplitude = 0;
+                for (let i = 0; i < freqData.length; i++) {
+                    avgAmplitude += freqData[i];
+                }
+                avgAmplitude = (avgAmplitude / freqData.length) / 255;
+
+                // Downsample time data
+                const samples = 128;
+                const downsampled = new Array(samples);
+                const step = Math.floor(timeData.length / samples);
+                for (let i = 0; i < samples; i++) {
+                    downsampled[i] = timeData[i * step];
                 }
 
-                const frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
-                analyserNode.getByteFrequencyData(frequencyData);
+                // Add to history
+                waveHistory.unshift(downsampled);
+                if (waveHistory.length > HISTORY_SIZE) {
+                    waveHistory.pop();
+                }
 
-                bars.forEach((bar, i) => {
-                    const binRange = logBinMapping[i];
+                animationPhase += 0.02;
 
-                    // Average the FFT bins for this bar's frequency range
-                    let sum = 0;
-                    let count = 0;
-                    for (let bin = binRange.start; bin <= binRange.end; bin++) {
-                        sum += frequencyData[bin] || 0;
-                        count++;
+                // Draw multiple wave layers
+                for (let layer = WAVE_LAYERS - 1; layer >= 0; layer--) {
+                    const historyIndex = Math.min(layer, waveHistory.length - 1);
+                    const data = waveHistory[historyIndex];
+                    const layerRatio = layer / WAVE_LAYERS;
+
+                    // Create gradient for this layer
+                    const gradient = canvasCtx.createLinearGradient(0, 0, width, 0);
+                    const alpha = 0.15 + (1 - layerRatio) * 0.6;
+
+                    // Cyan to magenta gradient
+                    gradient.addColorStop(0, `rgba(0, 255, 255, ${alpha})`);
+                    gradient.addColorStop(0.3, `rgba(100, 100, 255, ${alpha})`);
+                    gradient.addColorStop(0.5, `rgba(255, 0, 255, ${alpha})`);
+                    gradient.addColorStop(0.7, `rgba(255, 100, 200, ${alpha})`);
+                    gradient.addColorStop(1, `rgba(0, 255, 255, ${alpha})`);
+
+                    canvasCtx.strokeStyle = gradient;
+                    canvasCtx.lineWidth = 1.5 + (1 - layerRatio) * 2;
+                    canvasCtx.beginPath();
+
+                    const amplitude = (0.3 + avgAmplitude * 0.7) * (60 + layer * 5);
+                    const phaseOffset = layer * 0.3 + animationPhase;
+
+                    for (let i = 0; i < samples; i++) {
+                        const x = (i / (samples - 1)) * width;
+                        const dataValue = (data[i] - 128) / 128;
+                        const wave = Math.sin((i / samples) * Math.PI * 2 + phaseOffset) * 0.2;
+                        const y = centerY + (dataValue + wave) * amplitude;
+
+                        if (i === 0) {
+                            canvasCtx.moveTo(x, y);
+                        } else {
+                            canvasCtx.lineTo(x, y);
+                        }
                     }
-                    const value = count > 0 ? sum / count : 0;
 
-                    // Simple normalization (0-255 to 0-1)
-                    const normalized = value / 255;
+                    canvasCtx.stroke();
+                }
 
-                    const height = normalized * 110 + 4;
-                    bar.style.height = `${height}px`;
+                // Draw bright center line
+                const centerGradient = canvasCtx.createLinearGradient(0, 0, width, 0);
+                centerGradient.addColorStop(0, 'rgba(0, 255, 255, 0.8)');
+                centerGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.9)');
+                centerGradient.addColorStop(1, 'rgba(255, 0, 255, 0.8)');
 
-                    // Rainbow colors based on position, brightness based on amplitude
-                    const hue = (i / bars.length) * 300;
-                    const saturation = 70 + normalized * 30;
-                    const lightness = 45 + normalized * 15;
-                    bar.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                });
-            } else {
-                bars.forEach((bar, i) => {
-                    bar.style.height = '4px';
-                    const hue = (i / bars.length) * 300;
-                    bar.style.background = `hsl(${hue}, 30%, 70%)`;
-                });
+                canvasCtx.strokeStyle = centerGradient;
+                canvasCtx.lineWidth = 2;
+                canvasCtx.beginPath();
+
+                const currentData = waveHistory[0];
+                const centerAmplitude = 0.3 + avgAmplitude * 0.7;
+
+                for (let i = 0; i < samples; i++) {
+                    const x = (i / (samples - 1)) * width;
+                    const dataValue = (currentData[i] - 128) / 128;
+                    const y = centerY + dataValue * 50 * centerAmplitude;
+
+                    if (i === 0) {
+                        canvasCtx.moveTo(x, y);
+                    } else {
+                        canvasCtx.lineTo(x, y);
+                    }
+                }
+                canvasCtx.stroke();
+
+                // Add glow effect
+                canvasCtx.shadowBlur = 15;
+                canvasCtx.shadowColor = 'rgba(0, 255, 255, 0.5)';
             }
 
             requestAnimationFrame(animateVisualizer);
@@ -1433,6 +1493,12 @@
         // Initialize
         initVisualizer();
         log('AI Radio Station initialized');
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            initVisualizer();
+            if (isPlaying) animateVisualizer();
+        });
 
         // Load saved API key and update UI
         const savedApiKey = localStorage.getItem('gemini_api_key');
