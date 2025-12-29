@@ -328,6 +328,55 @@
             background: #B39A6E;
         }
 
+        .api-key-saved {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .api-key-status {
+            color: #4CAF50;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .change-key-btn {
+            padding: 6px 12px;
+            background: transparent;
+            color: #888;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .change-key-btn:hover {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .connect-btn {
+            width: 100%;
+            padding: 14px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 12px;
+        }
+
+        .connect-btn:hover {
+            background: #43A047;
+        }
+
+        .connect-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
         .api-link {
             font-size: 12px;
             color: #888;
@@ -658,9 +707,16 @@
                 <!-- API Key -->
                 <div class="card">
                     <div class="card-header">🔑 API Key</div>
-                    <div class="api-key-row">
-                        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="Enter your Gemini API key">
-                        <button class="save-btn" id="saveApiKeyBtn">Save</button>
+                    <div id="apiKeySection">
+                        <div class="api-key-row" id="apiKeyInputRow">
+                            <input type="password" class="api-key-input" id="apiKeyInput" placeholder="Enter your Gemini API key">
+                            <button class="save-btn" id="saveApiKeyBtn">Save</button>
+                        </div>
+                        <div class="api-key-saved" id="apiKeySavedRow" style="display: none;">
+                            <span class="api-key-status">API key saved</span>
+                            <button class="change-key-btn" id="changeKeyBtn">Change</button>
+                        </div>
+                        <button class="connect-btn" id="connectBtn" style="display: none;">Connect to Lyria</button>
                     </div>
                     <p class="api-link">Get your key from <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a></p>
                 </div>
@@ -726,6 +782,10 @@
         const loopBtn = document.getElementById('loopBtn');
         const apiKeyInput = document.getElementById('apiKeyInput');
         const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+        const apiKeyInputRow = document.getElementById('apiKeyInputRow');
+        const apiKeySavedRow = document.getElementById('apiKeySavedRow');
+        const changeKeyBtn = document.getElementById('changeKeyBtn');
+        const connectBtn = document.getElementById('connectBtn');
         const promptInput = document.getElementById('promptInput');
         const updateStationBtn = document.getElementById('updateStationBtn');
         const nowPlaying = document.getElementById('nowPlaying');
@@ -1122,6 +1182,7 @@
         function updateUI() {
             onAirDot.classList.toggle('active', isPlaying);
             playBtn.innerHTML = isPlaying ? '⏸' : '▶';
+            updateConnectBtn();
         }
 
         // Get current config
@@ -1155,6 +1216,32 @@
             }
         }
 
+        // Show/hide API key UI based on saved state
+        function updateApiKeyUI(hasSavedKey) {
+            if (hasSavedKey) {
+                apiKeyInputRow.style.display = 'none';
+                apiKeySavedRow.style.display = 'flex';
+                connectBtn.style.display = 'block';
+            } else {
+                apiKeyInputRow.style.display = 'flex';
+                apiKeySavedRow.style.display = 'none';
+                connectBtn.style.display = 'none';
+            }
+        }
+
+        // Update connect button state
+        function updateConnectBtn() {
+            if (isConnected) {
+                connectBtn.textContent = 'Connected';
+                connectBtn.disabled = true;
+                connectBtn.style.background = '#888';
+            } else {
+                connectBtn.textContent = 'Connect to Lyria';
+                connectBtn.disabled = false;
+                connectBtn.style.background = '#4CAF50';
+            }
+        }
+
         // Event listeners
         saveApiKeyBtn.addEventListener('click', () => {
             const apiKey = apiKeyInput.value.trim();
@@ -1163,13 +1250,30 @@
                 return;
             }
             localStorage.setItem('gemini_api_key', apiKey);
+            updateApiKeyUI(true);
+            log('API key saved');
+            showToast('API key saved. Click Connect to start.');
+        });
+
+        connectBtn.addEventListener('click', () => {
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) {
+                showToast('Please save an API key first');
+                return;
+            }
             connectWebSocket(apiKey, getCurrentConfig());
             log('Connecting to Lyria...');
         });
 
+        changeKeyBtn.addEventListener('click', () => {
+            updateApiKeyUI(false);
+            apiKeyInput.value = '';
+            apiKeyInput.focus();
+        });
+
         playBtn.addEventListener('click', () => {
             if (!isConnected) {
-                showToast('Please save your API key first');
+                showToast('Please connect first');
                 return;
             }
 
@@ -1330,11 +1434,14 @@
         initVisualizer();
         log('AI Radio Station initialized');
 
-        // Load saved API key
+        // Load saved API key and update UI
         const savedApiKey = localStorage.getItem('gemini_api_key');
         if (savedApiKey) {
             apiKeyInput.value = savedApiKey;
-            log('API key loaded from storage');
+            updateApiKeyUI(true);
+            log('API key loaded - click Connect to start');
+        } else {
+            updateApiKeyUI(false);
         }
     </script>
 </body>
