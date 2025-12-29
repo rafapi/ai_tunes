@@ -43,7 +43,7 @@ class MusicSession:
         self._receive_task: Optional[asyncio.Task] = None
         self._websocket = None
         self.current_config = {
-            "prompt": "House, TR-909 Drums, Deep Bass, Groovy",
+            "prompt": "Deep house with warm bass, four-on-the-floor beat, soulful chords, groovy and uplifting",
             "bpm": 124,
             "density": 0.55,  # Moderate density (0.1=sparse, 0.9=chaotic)
             "brightness": 0.5,
