@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Radio Station</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f3ef;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+        }
+
+        .logo-text h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #5D4E3C;
+        }
+
+        .logo-text p {
+            font-size: 11px;
+            color: #8B7355;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .on-air {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .on-air-dot {
+            width: 8px;
+            height: 8px;
+            background: #888;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .on-air-dot.active {
+            background: #4CAF50;
+            box-shadow: 0 0 8px #4CAF50;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        /* Audio Visualizer */
+        .visualizer-card {
+            padding: 30px;
+        }
+
+        .visualizer-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .bpm-display {
+            font-size: 18px;
+            font-weight: 500;
+            color: #8B7355;
+        }
+
+        .visualizer {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .visualizer-bar {
+            width: 4px;
+            border-radius: 2px;
+            transition: height 0.05s ease, background 0.1s ease;
+        }
+
+        /* Now Playing */
+        .now-playing {
+            background: #f0ebe4;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .now-playing-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .now-playing-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* Playback Controls */
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .control-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 18px;
+        }
+
+        .control-btn:hover {
+            background: #f5f3ef;
+        }
+
+        .control-btn.play-btn {
+            width: 64px;
+            height: 64px;
+            background: #C4A87C;
+            border: none;
+            color: white;
+            font-size: 24px;
+        }
+
+        .control-btn.play-btn:hover {
+            background: #B39A6E;
+        }
+
+        /* Bottom Grid */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* Sliders */
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .slider-label {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .slider-value {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #e0d9cf;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #8B7355;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Select */
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: #666;
+            pointer-events: none;
+        }
+
+        /* API Key */
+        .api-key-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .api-key-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .save-btn {
+            padding: 12px 24px;
+            background: #C4A87C;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .save-btn:hover {
+            background: #B39A6E;
+        }
+
+        .api-link {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+        }
+
+        .api-link a {
+            color: #C4A87C;
+            text-decoration: none;
+        }
+
+        /* Prompt */
+        .prompt-textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .update-btn {
+            width: 100%;
+            padding: 14px;
+            background: #C4A87C;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 12px;
+        }
+
+        .update-btn:hover {
+            background: #B39A6E;
+        }
+
+        /* Quick Genres */
+        .genres-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .genre-tag {
+            padding: 8px 16px;
+            background: #f5f3ef;
+            border: 1px solid #e0d9cf;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .genre-tag:hover {
+            background: #e8e3da;
+        }
+
+        .genre-tag.active {
+            background: #C4A87C;
+            color: white;
+            border-color: #C4A87C;
+        }
+
+        /* Mix Options */
+        .mix-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mix-btn {
+            padding: 10px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mix-btn:hover {
+            background: #f5f3ef;
+        }
+
+        .mix-btn.active {
+            background: #C4A87C;
+            color: white;
+            border-color: #C4A87C;
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            background: #f5f3ef;
+        }
+
+        .mode-btn.active {
+            background: #C4A87C;
+            color: white;
+            border-color: #C4A87C;
+        }
+
+        /* Debug Log */
+        .debug-log {
+            background: #f8f6f2;
+            border-radius: 8px;
+            padding: 16px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            color: #666;
+        }
+
+        .log-entry.success {
+            color: #4CAF50;
+        }
+
+        .log-entry.error {
+            color: #f44336;
+        }
+
+        .log-time {
+            color: #999;
+        }
+
+        /* Status Toast */
+        .status-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #f0ebe4;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .status-toast.visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">📻</div>
+                <div class="logo-text">
+                    <h1>AI Radio Station</h1>
+                    <p>Powered by Lyria Realtime</p>
+                </div>
+            </div>
+            <div class="on-air">
+                <span class="on-air-dot" id="onAirDot"></span>
+                ON AIR
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- Left Column -->
+            <div class="left-column">
+                <!-- Audio Visualizer -->
+                <div class="card visualizer-card">
+                    <div class="visualizer-header">
+                        <span class="bpm-display"><span id="bpmValue">124</span> BPM</span>
+                    </div>
+                    <div class="visualizer" id="visualizer"></div>
+                    <div class="now-playing">
+                        <div class="now-playing-label">Now Playing</div>
+                        <div class="now-playing-text" id="nowPlaying">House, TR-909 Drums, Deep Bass, Groovy</div>
+                    </div>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="controls-row">
+                    <button class="control-btn" id="stopBtn" title="Stop">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="6" width="12" height="12" rx="1"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn play-btn" id="playBtn" title="Play/Pause">▶</button>
+                    <button class="control-btn" id="loopBtn" title="Loop">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 2l4 4-4 4"/>
+                            <path d="M3 11v-1a4 4 0 0 1 4-4h14"/>
+                            <path d="M7 22l-4-4 4-4"/>
+                            <path d="M21 13v1a4 4 0 0 1-4 4H3"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Bottom Grid -->
+                <div class="bottom-grid">
+                    <!-- Controls -->
+                    <div class="card">
+                        <div class="card-header">🎛 Controls</div>
+
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span class="slider-label">BPM</span>
+                                <span class="slider-value" id="bpmSliderValue">124</span>
+                            </div>
+                            <input type="range" class="slider" id="bpmSlider" min="60" max="200" value="124">
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span class="slider-label">Density</span>
+                                <span class="slider-value" id="densityValue">55%</span>
+                            </div>
+                            <input type="range" class="slider" id="densitySlider" min="10" max="90" value="55">
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span class="slider-label">Brightness</span>
+                                <span class="slider-value" id="brightnessValue">50%</span>
+                            </div>
+                            <input type="range" class="slider" id="brightnessSlider" min="0" max="100" value="50">
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span class="slider-label">Guidance</span>
+                                <span class="slider-value" id="guidanceValue">5.0</span>
+                            </div>
+                            <input type="range" class="slider" id="guidanceSlider" min="1" max="6" value="5" step="0.1">
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span class="slider-label">Temperature</span>
+                                <span class="slider-value" id="temperatureValue">1.0</span>
+                            </div>
+                            <input type="range" class="slider" id="temperatureSlider" min="0" max="3" value="1.0" step="0.1">
+                        </div>
+                    </div>
+
+                    <!-- Scale & Mode -->
+                    <div class="card">
+                        <div class="card-header">🎹 Scale</div>
+                        <div class="select-wrapper">
+                            <select id="scaleSelect">
+                                <option value="">Auto (Model decides)</option>
+                                <option value="C_MAJOR_A_MINOR">C Major / A Minor</option>
+                                <option value="D_FLAT_MAJOR_B_FLAT_MINOR">Db Major / Bb Minor</option>
+                                <option value="D_MAJOR_B_MINOR">D Major / B Minor</option>
+                                <option value="E_FLAT_MAJOR_C_MINOR">Eb Major / C Minor</option>
+                                <option value="E_MAJOR_D_FLAT_MINOR">E Major / C# Minor</option>
+                                <option value="F_MAJOR_D_MINOR">F Major / D Minor</option>
+                                <option value="G_FLAT_MAJOR_E_FLAT_MINOR">Gb Major / Eb Minor</option>
+                                <option value="G_MAJOR_E_MINOR">G Major / E Minor</option>
+                                <option value="A_FLAT_MAJOR_F_MINOR">Ab Major / F Minor</option>
+                                <option value="A_MAJOR_G_FLAT_MINOR">A Major / F# Minor</option>
+                                <option value="B_FLAT_MAJOR_G_MINOR">Bb Major / G Minor</option>
+                                <option value="B_MAJOR_A_FLAT_MINOR">B Major / G# Minor</option>
+                            </select>
+                        </div>
+
+                        <div class="card-header" style="margin-top: 20px;">🎲 Generation Mode</div>
+                        <div class="mode-toggle">
+                            <button class="mode-btn active" id="qualityModeBtn">Quality</button>
+                            <button class="mode-btn" id="diversityModeBtn">Diversity</button>
+                        </div>
+                    </div>
+
+                    <!-- Mix Options -->
+                    <div class="card">
+                        <div class="card-header">🎚 Mix Options</div>
+                        <div class="mix-buttons">
+                            <button class="mix-btn" id="muteBassBtn">Mute Bass</button>
+                            <button class="mix-btn" id="muteDrumsBtn">Mute Drums</button>
+                            <button class="mix-btn" id="onlyBassAndDrumsBtn">Only Bass & Drums</button>
+                        </div>
+                    </div>
+
+                    <!-- Debug Log -->
+                    <div class="card">
+                        <div class="card-header">📋 Debug Log</div>
+                        <div class="debug-log" id="debugLog"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="right-column">
+                <!-- API Key -->
+                <div class="card">
+                    <div class="card-header">🔑 API Key</div>
+                    <div class="api-key-row">
+                        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="Enter your Gemini API key">
+                        <button class="save-btn" id="saveApiKeyBtn">Save</button>
+                    </div>
+                    <p class="api-link">Get your key from <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a></p>
+                </div>
+
+                <!-- Prompt -->
+                <div class="card">
+                    <div class="card-header">🎤 Prompt</div>
+                    <textarea class="prompt-textarea" id="promptInput">House, TR-909 Drums, Deep Bass, Groovy</textarea>
+                    <button class="update-btn" id="updateStationBtn">Update Station</button>
+                </div>
+
+                <!-- Quick Genres -->
+                <div class="card">
+                    <div class="card-header">✨ Quick Genres</div>
+                    <div class="genres-grid" id="genresGrid">
+                        <button class="genre-tag" data-genre="Lo-Fi Hip Hop" data-prompt="Lo-Fi Hip Hop, SP-404 Sampler, Vinyl Crackle, Mellow" data-bpm="85" data-density="40">Lo-Fi Hip Hop</button>
+                        <button class="genre-tag" data-genre="Techno" data-prompt="Techno, TR-909 Drum Machine, 303 Acid Bass, Driving" data-bpm="128" data-density="60">Techno</button>
+                        <button class="genre-tag" data-genre="House" data-prompt="House, TR-909 Drums, Deep Bass, Groovy" data-bpm="124" data-density="55">House</button>
+                        <button class="genre-tag" data-genre="Ambient" data-prompt="Ambient, Buchla Synths, Ethereal Pads, Spacious" data-bpm="70" data-density="25">Ambient</button>
+                        <button class="genre-tag" data-genre="Afrobeat" data-prompt="Afrobeat, Danceable, Percussion" data-bpm="120" data-density="50">Afrobeat</button>
+                        <button class="genre-tag" data-genre="Disco" data-prompt="Disco, Funk Bass, String Section, Uplifting" data-bpm="120" data-density="60">Disco</button>
+                        <button class="genre-tag" data-genre="Bossa Nova" data-prompt="Bossa Nova, Nylon Guitar, Brushed Drums, Smooth" data-bpm="80" data-density="35">Bossa Nova</button>
+                        <button class="genre-tag" data-genre="Synthwave" data-prompt="Synthwave, Jupiter-8 Synth, Arpeggiator, Retro Nostalgia" data-bpm="118" data-density="50">Synthwave</button>
+                        <button class="genre-tag" data-genre="Drum and Bass" data-prompt="Drum and Bass, Breakbeat, Reese Bass, Intense" data-bpm="174" data-density="70">Drum and Bass</button>
+                        <button class="genre-tag" data-genre="Dub" data-prompt="Dub, Spring Reverb, Delay Echo, Hypnotic Bass" data-bpm="75" data-density="40">Dub</button>
+                        <button class="genre-tag" data-genre="Funk" data-prompt="Funk, Clavinet, Slap Bass, Tight Groove" data-bpm="105" data-density="55">Funk</button>
+                        <button class="genre-tag" data-genre="Chillout" data-prompt="Chillout, Rhodes Piano, Soft Pads, Relaxing" data-bpm="95" data-density="35">Chillout</button>
+                        <button class="genre-tag" data-genre="Acid" data-prompt="Acid, TB-303, Squelchy Bass, Hypnotic" data-bpm="130" data-density="50">Acid</button>
+                        <button class="genre-tag" data-genre="Trance" data-prompt="Trance, Supersaw Synth, Arpeggios, Euphoric" data-bpm="138" data-density="60">Trance</button>
+                        <button class="genre-tag" data-genre="Jazz Fusion" data-prompt="Jazz Fusion, Fender Rhodes, Upright Bass, Sophisticated" data-bpm="95" data-density="45">Jazz Fusion</button>
+                        <button class="genre-tag" data-genre="Focus" data-prompt="Ambient, Soft Pads, Gentle Textures, Calm and Minimal" data-bpm="80" data-density="25">Focus</button>
+                        <button class="genre-tag" data-genre="Pop" data-prompt="Pop, Bright Synths, Punchy Drums, Catchy" data-bpm="118" data-density="55">Pop</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-toast" id="statusToast"></div>
+
+    <script>
+        // State
+        let ws = null;
+        let audioContext = null;
+        let analyserNode = null;
+        let isPlaying = false;
+        let isConnected = false;
+
+        // Audio playback configuration
+        const SAMPLE_RATE = 48000;
+        const CHANNELS = 2;
+        const BUFFER_TIME = 5;  // 5 second buffer for settling (per Lyria guide)
+
+        // Audio player state
+        let nextStartTime = 0;
+        let outputNode = null;
+        let audioState = 'stopped';  // 'stopped', 'loading', 'playing'
+
+        // Elements
+        const onAirDot = document.getElementById('onAirDot');
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const loopBtn = document.getElementById('loopBtn');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+        const promptInput = document.getElementById('promptInput');
+        const updateStationBtn = document.getElementById('updateStationBtn');
+        const nowPlaying = document.getElementById('nowPlaying');
+        const debugLog = document.getElementById('debugLog');
+        const statusToast = document.getElementById('statusToast');
+        const visualizer = document.getElementById('visualizer');
+
+        // Sliders
+        const bpmSlider = document.getElementById('bpmSlider');
+        const densitySlider = document.getElementById('densitySlider');
+        const brightnessSlider = document.getElementById('brightnessSlider');
+        const guidanceSlider = document.getElementById('guidanceSlider');
+        const temperatureSlider = document.getElementById('temperatureSlider');
+        const scaleSelect = document.getElementById('scaleSelect');
+
+        // Mode buttons
+        const qualityModeBtn = document.getElementById('qualityModeBtn');
+        const diversityModeBtn = document.getElementById('diversityModeBtn');
+
+        // Mix buttons
+        const muteBassBtn = document.getElementById('muteBassBtn');
+        const muteDrumsBtn = document.getElementById('muteDrumsBtn');
+        const onlyBassAndDrumsBtn = document.getElementById('onlyBassAndDrumsBtn');
+
+        // Initialize visualizer bars
+        function initVisualizer() {
+            visualizer.innerHTML = '';
+            for (let i = 0; i < 64; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'visualizer-bar';
+                bar.style.height = '4px';
+                // Initialize with rainbow colors (dimmed)
+                const hue = (i / 64) * 300;
+                bar.style.background = `hsl(${hue}, 30%, 70%)`;
+                visualizer.appendChild(bar);
+            }
+        }
+
+        // Compute logarithmic frequency bin mapping (called once)
+        function computeLogBinMapping(numBars, fftSize, sampleRate) {
+            const binCount = fftSize / 2;
+            const nyquist = sampleRate / 2;
+            const minFreq = 20;    // 20 Hz (lower limit of human hearing)
+            const maxFreq = 16000; // 16 kHz (reasonable upper limit)
+
+            const logMin = Math.log10(minFreq);
+            const logMax = Math.log10(maxFreq);
+            const logRange = logMax - logMin;
+
+            const mapping = [];
+            for (let i = 0; i < numBars; i++) {
+                // Logarithmic frequency for this bar
+                const logFreq = logMin + (i / numBars) * logRange;
+                const freq = Math.pow(10, logFreq);
+
+                // Next bar's frequency
+                const logFreqNext = logMin + ((i + 1) / numBars) * logRange;
+                const freqNext = Math.pow(10, logFreqNext);
+
+                // Convert to FFT bin indices
+                const binStart = Math.floor(freq * binCount / nyquist);
+                const binEnd = Math.floor(freqNext * binCount / nyquist);
+
+                mapping.push({
+                    start: Math.max(0, binStart),
+                    end: Math.min(binCount - 1, Math.max(binStart + 1, binEnd))
+                });
+            }
+            return mapping;
+        }
+
+        // Cache the bin mapping
+        let logBinMapping = null;
+
+        // Animate visualizer with real frequency data
+        function animateVisualizer() {
+            const bars = visualizer.querySelectorAll('.visualizer-bar');
+
+            if (!isPlaying) {
+                // Reset bars when not playing - dim colors
+                bars.forEach((bar, i) => {
+                    bar.style.height = '4px';
+                    const hue = (i / bars.length) * 300;
+                    bar.style.background = `hsl(${hue}, 30%, 70%)`;
+                });
+                return;
+            }
+
+            if (analyserNode) {
+                // Initialize log mapping if needed
+                if (!logBinMapping) {
+                    logBinMapping = computeLogBinMapping(bars.length, analyserNode.fftSize, SAMPLE_RATE);
+                }
+
+                const frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
+                analyserNode.getByteFrequencyData(frequencyData);
+
+                bars.forEach((bar, i) => {
+                    const binRange = logBinMapping[i];
+
+                    // Average the FFT bins for this bar's frequency range
+                    let sum = 0;
+                    let count = 0;
+                    for (let bin = binRange.start; bin <= binRange.end; bin++) {
+                        sum += frequencyData[bin] || 0;
+                        count++;
+                    }
+                    const value = count > 0 ? sum / count : 0;
+
+                    // Simple normalization (0-255 to 0-1)
+                    const normalized = value / 255;
+
+                    const height = normalized * 110 + 4;
+                    bar.style.height = `${height}px`;
+
+                    // Rainbow colors based on position, brightness based on amplitude
+                    const hue = (i / bars.length) * 300;
+                    const saturation = 70 + normalized * 30;
+                    const lightness = 45 + normalized * 15;
+                    bar.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                });
+            } else {
+                bars.forEach((bar, i) => {
+                    bar.style.height = '4px';
+                    const hue = (i / bars.length) * 300;
+                    bar.style.background = `hsl(${hue}, 30%, 70%)`;
+                });
+            }
+
+            requestAnimationFrame(animateVisualizer);
+        }
+
+        // Log message
+        function log(message, type = '') {
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${type === 'success' ? '✅' : type === 'error' ? '❌' : ''} ${message}`;
+            debugLog.appendChild(entry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+
+        // Show toast
+        function showToast(message) {
+            statusToast.textContent = message;
+            statusToast.classList.add('visible');
+            setTimeout(() => statusToast.classList.remove('visible'), 3000);
+        }
+
+        // Connect WebSocket
+        function connectWebSocket(apiKey, config = {}) {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                log('WebSocket connected', 'success');
+                ws.send(JSON.stringify({
+                    action: 'init',
+                    api_key: apiKey,
+                    config: config
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+
+            ws.onclose = () => {
+                log('WebSocket disconnected');
+                isConnected = false;
+                updateUI();
+            };
+
+            ws.onerror = (error) => {
+                log('WebSocket error', 'error');
+                console.error(error);
+            };
+        }
+
+        // Handle incoming messages
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'connected':
+                    isConnected = true;
+                    log('Connected to Lyria', 'success');
+                    showToast('Station tuned! Ready to generate music...');
+                    updateUI();
+                    break;
+
+                case 'playing':
+                    isPlaying = true;
+                    log('Music stream started', 'success');
+                    startAudioPlayback();  // Start with fresh buffer
+                    animateVisualizer();
+                    updateUI();
+                    break;
+
+                case 'paused':
+                    isPlaying = false;
+                    log('Music paused');
+                    stopAudioPlayback();
+                    updateUI();
+                    break;
+
+                case 'stopped':
+                    isPlaying = false;
+                    log('Music stopped');
+                    stopAudioPlayback();
+                    updateUI();
+                    break;
+
+                case 'audio':
+                    playAudio(data.data);
+                    break;
+
+                case 'log':
+                    log(data.message, 'success');
+                    break;
+
+                case 'updated':
+                    log('Config updated', 'success');
+                    // Only show "Prompt updated" if we actually updated the prompt
+                    if (pendingUpdate && pendingUpdate.prompt) {
+                        log('Prompt updated - music will transition', 'success');
+                    }
+                    pendingUpdate = null;  // Clear pending update
+                    break;
+
+                case 'filtered':
+                    log(`Prompt filtered: ${data.reason}`, 'error');
+                    showToast(`Prompt filtered: ${data.reason}`);
+                    break;
+
+                case 'error':
+                    log(`Error: ${data.message}`, 'error');
+                    showToast(data.message);
+                    break;
+
+                case 'disconnected':
+                    isConnected = false;
+                    isPlaying = false;
+                    log('Disconnected from Lyria');
+                    updateUI();
+                    break;
+            }
+        }
+
+        // Initialize audio context and output node
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            if (!analyserNode) {
+                analyserNode = audioContext.createAnalyser();
+                analyserNode.fftSize = 2048; // More bins for better log-frequency resolution
+                analyserNode.smoothingTimeConstant = 0.7;
+                analyserNode.connect(audioContext.destination);
+            }
+            if (!outputNode) {
+                outputNode = audioContext.createGain();
+                outputNode.connect(analyserNode);
+            }
+            return audioContext;
+        }
+
+        // Decode audio data from bytes to AudioBuffer (matches reference implementation)
+        function decodeAudioData(data, ctx, sampleRate, numChannels) {
+            const buffer = ctx.createBuffer(
+                numChannels,
+                data.length / 2 / numChannels,
+                sampleRate
+            );
+
+            // Convert Int16 to Float32
+            const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.length / 2);
+            const dataFloat32 = new Float32Array(dataInt16.length);
+            for (let i = 0; i < dataInt16.length; i++) {
+                dataFloat32[i] = dataInt16[i] / 32768.0;
+            }
+
+            // Extract interleaved channels
+            for (let ch = 0; ch < numChannels; ch++) {
+                const channelData = buffer.getChannelData(ch);
+                for (let i = 0; i < channelData.length; i++) {
+                    channelData[i] = dataFloat32[i * numChannels + ch];
+                }
+            }
+
+            return buffer;
+        }
+
+        // Set audio state and update UI
+        function setAudioState(state) {
+            audioState = state;
+            if (state === 'loading') {
+                log('Buffering audio...');
+            }
+        }
+
+        // Play raw PCM audio chunk (16-bit, 48kHz, stereo) - matches reference
+        function playAudio(base64Data) {
+            if (audioState === 'stopped') return;
+
+            const ctx = initAudioContext();
+
+            try {
+                // Decode base64 to binary
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                // Decode to AudioBuffer using reference implementation method
+                const audioBuffer = decodeAudioData(bytes, ctx, SAMPLE_RATE, CHANNELS);
+
+                // Create buffer source
+                const source = ctx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(outputNode);
+
+                // First chunk: set up buffer time before starting playback
+                if (nextStartTime === 0) {
+                    nextStartTime = ctx.currentTime + BUFFER_TIME;
+                    setAudioState('loading');
+                    // Fade in after buffer time
+                    setTimeout(() => {
+                        if (audioState !== 'stopped') {
+                            setAudioState('playing');
+                            log('Audio buffered, playing', 'success');
+                        }
+                    }, BUFFER_TIME * 1000);
+                }
+
+                // If we've fallen behind, reset to loading state
+                if (nextStartTime < ctx.currentTime) {
+                    setAudioState('loading');
+                    nextStartTime = 0;
+                    log('Buffer underrun, rebuffering...', 'error');
+                    return;
+                }
+
+                // Schedule this chunk
+                source.start(nextStartTime);
+                nextStartTime += audioBuffer.duration;
+
+            } catch (error) {
+                console.error('Audio playback error:', error);
+            }
+        }
+
+        // Start audio playback with fade in
+        function startAudioPlayback() {
+            const ctx = initAudioContext();
+            audioState = 'loading';
+            nextStartTime = 0;
+
+            // Create fresh output node connected to analyser
+            outputNode = ctx.createGain();
+            outputNode.connect(analyserNode);
+
+            // Fade in
+            outputNode.gain.setValueAtTime(0, ctx.currentTime);
+            outputNode.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.1);
+        }
+
+        // Stop audio playback with fade out
+        function stopAudioPlayback() {
+            if (audioContext && outputNode) {
+                // Fade out
+                outputNode.gain.setValueAtTime(outputNode.gain.value, audioContext.currentTime);
+                outputNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+            }
+            audioState = 'stopped';
+            nextStartTime = 0;
+
+            // Create new output node for next playback
+            if (audioContext && analyserNode) {
+                outputNode = audioContext.createGain();
+                outputNode.connect(analyserNode);
+            }
+        }
+
+        // Reset audio playback (alias for compatibility)
+        function resetAudioPlayback() {
+            stopAudioPlayback();
+        }
+
+        // Update UI state
+        function updateUI() {
+            onAirDot.classList.toggle('active', isPlaying);
+            playBtn.innerHTML = isPlaying ? '⏸' : '▶';
+        }
+
+        // Get current config
+        function getCurrentConfig() {
+            return {
+                prompt: promptInput.value,
+                bpm: parseInt(bpmSlider.value),
+                density: parseInt(densitySlider.value) / 100,
+                brightness: parseInt(brightnessSlider.value) / 100,
+                guidance: parseFloat(guidanceSlider.value),
+                temperature: parseFloat(temperatureSlider.value),
+                scale: scaleSelect.value || null,  // Convert empty string to null for "Auto"
+                music_generation_mode: qualityModeBtn.classList.contains('active') ? 'QUALITY' : 'DIVERSITY',
+                mute_bass: muteBassBtn.classList.contains('active'),
+                mute_drums: muteDrumsBtn.classList.contains('active'),
+                only_bass_and_drums: onlyBassAndDrumsBtn.classList.contains('active'),
+            };
+        }
+
+        // Track what's being updated
+        let pendingUpdate = null;
+
+        // Send update to server
+        function sendUpdate(config = {}) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                pendingUpdate = config;  // Track what we're updating
+                ws.send(JSON.stringify({
+                    action: 'update',
+                    config: config
+                }));
+            }
+        }
+
+        // Event listeners
+        saveApiKeyBtn.addEventListener('click', () => {
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                showToast('Please enter an API key');
+                return;
+            }
+            localStorage.setItem('gemini_api_key', apiKey);
+            connectWebSocket(apiKey, getCurrentConfig());
+            log('Connecting to Lyria...');
+        });
+
+        playBtn.addEventListener('click', () => {
+            if (!isConnected) {
+                showToast('Please save your API key first');
+                return;
+            }
+
+            // Initialize audio context on user gesture (required by browsers)
+            initAudioContext();
+
+            if (isPlaying) {
+                ws.send(JSON.stringify({ action: 'pause' }));
+            } else {
+                ws.send(JSON.stringify({ action: 'play' }));
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: 'stop' }));
+            }
+        });
+
+        updateStationBtn.addEventListener('click', () => {
+            const prompt = promptInput.value;
+            nowPlaying.textContent = prompt;
+            log(`Updating prompt to: "${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}"...`);
+            sendUpdate(getCurrentConfig());
+        });
+
+        // Slider listeners
+        bpmSlider.addEventListener('input', (e) => {
+            document.getElementById('bpmSliderValue').textContent = e.target.value;
+            document.getElementById('bpmValue').textContent = e.target.value;
+        });
+
+        bpmSlider.addEventListener('change', () => {
+            log(`Updating BPM to ${bpmSlider.value}...`);
+            log('Resetting context for BPM change...');
+            sendUpdate({ bpm: parseInt(bpmSlider.value) });
+        });
+
+        densitySlider.addEventListener('input', (e) => {
+            document.getElementById('densityValue').textContent = `${e.target.value}%`;
+        });
+
+        densitySlider.addEventListener('change', () => {
+            log(`Updating density to ${densitySlider.value}%...`);
+            sendUpdate({ density: parseInt(densitySlider.value) / 100 });
+        });
+
+        brightnessSlider.addEventListener('input', (e) => {
+            document.getElementById('brightnessValue').textContent = `${e.target.value}%`;
+        });
+
+        brightnessSlider.addEventListener('change', () => {
+            log(`Updating brightness to ${brightnessSlider.value}%...`);
+            sendUpdate({ brightness: parseInt(brightnessSlider.value) / 100 });
+        });
+
+        guidanceSlider.addEventListener('input', (e) => {
+            document.getElementById('guidanceValue').textContent = parseFloat(e.target.value).toFixed(1);
+        });
+
+        guidanceSlider.addEventListener('change', () => {
+            log(`Updating guidance to ${parseFloat(guidanceSlider.value).toFixed(1)}...`);
+            sendUpdate({ guidance: parseFloat(guidanceSlider.value) });
+        });
+
+        temperatureSlider.addEventListener('input', (e) => {
+            document.getElementById('temperatureValue').textContent = parseFloat(e.target.value).toFixed(1);
+        });
+
+        temperatureSlider.addEventListener('change', () => {
+            log(`Updating temperature to ${parseFloat(temperatureSlider.value).toFixed(1)}...`);
+            sendUpdate({ temperature: parseFloat(temperatureSlider.value) });
+        });
+
+        scaleSelect.addEventListener('change', () => {
+            const scaleValue = scaleSelect.value || null;
+            const scaleName = scaleSelect.options[scaleSelect.selectedIndex].text;
+            log(`Updating scale to ${scaleName}...`);
+            log('Resetting context for Scale change...');
+            sendUpdate({ scale: scaleValue });
+        });
+
+        // Mode button listeners
+        qualityModeBtn.addEventListener('click', () => {
+            qualityModeBtn.classList.add('active');
+            diversityModeBtn.classList.remove('active');
+            log('Switching to Quality mode...');
+            sendUpdate({ music_generation_mode: 'QUALITY' });
+        });
+
+        diversityModeBtn.addEventListener('click', () => {
+            diversityModeBtn.classList.add('active');
+            qualityModeBtn.classList.remove('active');
+            log('Switching to Diversity mode...');
+            sendUpdate({ music_generation_mode: 'DIVERSITY' });
+        });
+
+        // Mix button listeners
+        muteBassBtn.addEventListener('click', () => {
+            muteBassBtn.classList.toggle('active');
+            const isActive = muteBassBtn.classList.contains('active');
+            log(isActive ? 'Muting bass...' : 'Unmuting bass...');
+            sendUpdate({ mute_bass: isActive });
+        });
+
+        muteDrumsBtn.addEventListener('click', () => {
+            muteDrumsBtn.classList.toggle('active');
+            const isActive = muteDrumsBtn.classList.contains('active');
+            log(isActive ? 'Muting drums...' : 'Unmuting drums...');
+            sendUpdate({ mute_drums: isActive });
+        });
+
+        onlyBassAndDrumsBtn.addEventListener('click', () => {
+            onlyBassAndDrumsBtn.classList.toggle('active');
+            const isActive = onlyBassAndDrumsBtn.classList.contains('active');
+            log(isActive ? 'Switching to bass & drums only...' : 'Restoring full mix...');
+            sendUpdate({ only_bass_and_drums: isActive });
+        });
+
+        // Genre tag listeners
+        document.querySelectorAll('.genre-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                document.querySelectorAll('.genre-tag').forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+                const genre = tag.dataset.genre;
+                const prompt = tag.dataset.prompt || genre;
+                const bpm = tag.dataset.bpm ? parseInt(tag.dataset.bpm) : null;
+                const density = tag.dataset.density ? parseInt(tag.dataset.density) : null;
+
+                // Update prompt
+                promptInput.value = prompt;
+                nowPlaying.textContent = prompt;
+
+                // Build update config
+                const updateConfig = { prompt: prompt };
+
+                // Update BPM if specified
+                if (bpm) {
+                    bpmSlider.value = bpm;
+                    document.getElementById('bpmSliderValue').textContent = bpm;
+                    document.getElementById('bpmValue').textContent = bpm;
+                    updateConfig.bpm = bpm;
+                }
+
+                // Update Density if specified
+                if (density) {
+                    densitySlider.value = density;
+                    document.getElementById('densityValue').textContent = `${density}%`;
+                    updateConfig.density = density / 100;
+                }
+
+                log(`Selecting genre: ${genre} (${bpm || 120} BPM, ${density || 50}% density)...`);
+                sendUpdate(updateConfig);
+            });
+        });
+
+        // Initialize
+        initVisualizer();
+        log('AI Radio Station initialized');
+
+        // Load saved API key
+        const savedApiKey = localStorage.getItem('gemini_api_key');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+            log('API key loaded from storage');
+        }
+    </script>
+</body>
+</html>
