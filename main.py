@@ -180,6 +180,18 @@ class MusicSession:
                 self._websocket = None
             return False
 
+    def _get_flavor_prompts(self) -> list[types.WeightedPrompt]:
+        """Get list of active flavor weighted prompts."""
+        flavor_prompts = []
+        flavors = self.current_config.get("flavors", {})
+        for flavor_key, flavor_data in flavors.items():
+            if flavor_data.get("enabled") and flavor_key in FLAVOR_PRESETS:
+                weight = flavor_data.get("weight", 0.3)
+                flavor_prompts.append(
+                    types.WeightedPrompt(text=FLAVOR_PRESETS[flavor_key], weight=weight)
+                )
+        return flavor_prompts
+
     async def _crossfade(
         self,
         old_prompt: str,
@@ -203,10 +215,14 @@ class MusicSession:
 
                 alpha = i / steps  # 0.0 -> 1.0
 
+                # Build prompts: crossfading base prompts + active flavors
                 prompts = [
                     types.WeightedPrompt(text=old_full, weight=1.0 - alpha),
                     types.WeightedPrompt(text=new_full, weight=alpha),
                 ]
+                # Add active flavors so they persist through crossfade
+                prompts.extend(self._get_flavor_prompts())
+
                 await self._apply_prompts(prompts)
 
                 # Log progress at key points (using safe send)
@@ -221,10 +237,10 @@ class MusicSession:
 
                 await asyncio.sleep(step_time)
 
-            # Final state: just the new prompt at full weight
+            # Final state: new prompt + flavors (use default _apply_prompts to include flavors)
             if self.session:
                 self._active_prompt = new_full
-                await self._apply_prompts([types.WeightedPrompt(text=new_full, weight=1.0)])
+                await self._apply_prompts()  # Will include flavors automatically
 
         except asyncio.CancelledError:
             # Crossfade was interrupted by another transition
@@ -495,10 +511,13 @@ async def websocket_endpoint(websocket: WebSocket):
 
             elif action == "disconnect":
                 if session:
+                    # Send before closing so we can use the lock
+                    await send({"type": "disconnected"})
                     await session.close()
                     sessions.pop(session_id, None)
                     session = None
-                await websocket.send_json({"type": "disconnected"})  # No session, direct send ok
+                else:
+                    await websocket.send_json({"type": "disconnected"})
 
     except WebSocketDisconnect:
         pass
