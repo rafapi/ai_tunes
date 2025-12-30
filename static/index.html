@@ -91,6 +91,31 @@
             50% { opacity: 0.5; }
         }
 
+        @keyframes crossfade-pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .now-playing.transitioning {
+            position: relative;
+        }
+
+        .now-playing.transitioning::after {
+            content: 'Transitioning...';
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 11px;
+            color: #C4A87C;
+            animation: crossfade-pulse 1s infinite;
+        }
+
+        .on-air-dot.transitioning {
+            background: #C4A87C;
+            box-shadow: 0 0 8px #C4A87C;
+            animation: crossfade-pulse 0.5s infinite;
+        }
+
         /* Main Layout */
         .main-layout {
             display: grid;
@@ -505,6 +530,69 @@
             border-color: #C4A87C;
         }
 
+        /* Flavor Slots */
+        .flavors-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .flavor-slot {
+            padding: 10px 12px;
+            background: #f8f6f2;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .flavor-slot.active {
+            background: #f0ebe4;
+            box-shadow: inset 0 0 0 1px #C4A87C;
+        }
+
+        .flavor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .flavor-toggle {
+            padding: 5px 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .flavor-toggle:hover {
+            background: #f5f3ef;
+        }
+
+        .flavor-toggle.active {
+            background: #C4A87C;
+            color: white;
+            border-color: #C4A87C;
+        }
+
+        .flavor-weight-value {
+            font-size: 12px;
+            color: #888;
+            min-width: 28px;
+            text-align: right;
+        }
+
+        .flavor-slot .slider {
+            margin-top: 4px;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+
+        .flavor-slot.active .slider {
+            opacity: 1;
+        }
+
         /* Debug Log */
         .debug-log {
             background: #f8f6f2;
@@ -691,6 +779,12 @@
                             <button class="mode-btn active" id="qualityModeBtn">Quality</button>
                             <button class="mode-btn" id="diversityModeBtn">Diversity</button>
                         </div>
+
+                        <div class="card-header" style="margin-top: 20px;">🔀 Transitions</div>
+                        <div class="mode-toggle">
+                            <button class="mode-btn" id="instantTransitionBtn">Instant</button>
+                            <button class="mode-btn active" id="smoothTransitionBtn">Smooth</button>
+                        </div>
                     </div>
 
                     <!-- Mix Options -->
@@ -741,6 +835,55 @@
                 <div class="card">
                     <div class="card-header">🚫 Negative Prompt</div>
                     <textarea class="prompt-textarea" id="negativePromptInput">No vocals, no glitch artifacts, no harsh cymbal wash</textarea>
+                </div>
+
+                <!-- Flavor Layers -->
+                <div class="card">
+                    <div class="card-header">🎨 Flavor Layers</div>
+                    <div class="flavors-grid" id="flavorsGrid">
+                        <div class="flavor-slot" data-flavor="tight_rhythm">
+                            <div class="flavor-header">
+                                <button class="flavor-toggle">Tight Rhythm</button>
+                                <span class="flavor-weight-value">0.3</span>
+                            </div>
+                            <input type="range" class="slider" min="0.1" max="0.8" step="0.1" value="0.3">
+                        </div>
+                        <div class="flavor-slot" data-flavor="analog_warmth">
+                            <div class="flavor-header">
+                                <button class="flavor-toggle">Analog Warmth</button>
+                                <span class="flavor-weight-value">0.3</span>
+                            </div>
+                            <input type="range" class="slider" min="0.1" max="0.8" step="0.1" value="0.3">
+                        </div>
+                        <div class="flavor-slot" data-flavor="melodic">
+                            <div class="flavor-header">
+                                <button class="flavor-toggle">Melodic</button>
+                                <span class="flavor-weight-value">0.3</span>
+                            </div>
+                            <input type="range" class="slider" min="0.1" max="0.8" step="0.1" value="0.3">
+                        </div>
+                        <div class="flavor-slot" data-flavor="live_feel">
+                            <div class="flavor-header">
+                                <button class="flavor-toggle">Live Feel</button>
+                                <span class="flavor-weight-value">0.3</span>
+                            </div>
+                            <input type="range" class="slider" min="0.1" max="0.8" step="0.1" value="0.3">
+                        </div>
+                        <div class="flavor-slot" data-flavor="atmospheric">
+                            <div class="flavor-header">
+                                <button class="flavor-toggle">Atmospheric</button>
+                                <span class="flavor-weight-value">0.3</span>
+                            </div>
+                            <input type="range" class="slider" min="0.1" max="0.8" step="0.1" value="0.3">
+                        </div>
+                        <div class="flavor-slot" data-flavor="punchy_mix">
+                            <div class="flavor-header">
+                                <button class="flavor-toggle">Punchy Mix</button>
+                                <span class="flavor-weight-value">0.3</span>
+                            </div>
+                            <input type="range" class="slider" min="0.1" max="0.8" step="0.1" value="0.3">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Quick Genres -->
@@ -820,6 +963,21 @@
         const muteBassBtn = document.getElementById('muteBassBtn');
         const muteDrumsBtn = document.getElementById('muteDrumsBtn');
         const onlyBassAndDrumsBtn = document.getElementById('onlyBassAndDrumsBtn');
+
+        // Transition buttons
+        const instantTransitionBtn = document.getElementById('instantTransitionBtn');
+        const smoothTransitionBtn = document.getElementById('smoothTransitionBtn');
+        let smoothTransitions = true;  // Default to smooth
+
+        // Flavor state
+        const flavorState = {
+            tight_rhythm: { enabled: false, weight: 0.3 },
+            analog_warmth: { enabled: false, weight: 0.3 },
+            melodic: { enabled: false, weight: 0.3 },
+            live_feel: { enabled: false, weight: 0.3 },
+            atmospheric: { enabled: false, weight: 0.3 },
+            punchy_mix: { enabled: false, weight: 0.3 },
+        };
 
         // Wave history for smooth animation
         let waveHistory = [];
@@ -1014,6 +1172,74 @@
             setTimeout(() => statusToast.classList.remove('visible'), 3000);
         }
 
+        // Clear transitioning indicator
+        function clearTransitioningUI() {
+            document.querySelector('.now-playing')?.classList.remove('transitioning');
+            onAirDot.classList.remove('transitioning');
+        }
+
+        // Flavor management functions
+        function updateFlavorUI(flavorKey) {
+            const slot = document.querySelector(`.flavor-slot[data-flavor="${flavorKey}"]`);
+            if (!slot) return;
+
+            const toggle = slot.querySelector('.flavor-toggle');
+            const data = flavorState[flavorKey];
+
+            if (data.enabled) {
+                slot.classList.add('active');
+                toggle.classList.add('active');
+            } else {
+                slot.classList.remove('active');
+                toggle.classList.remove('active');
+            }
+        }
+
+        function sendFlavorUpdate() {
+            const enabledFlavors = {};
+            for (const [key, data] of Object.entries(flavorState)) {
+                if (data.enabled) {
+                    enabledFlavors[key] = { enabled: true, weight: data.weight };
+                }
+            }
+            sendUpdate({ flavors: enabledFlavors });
+        }
+
+        function toggleFlavor(flavorKey) {
+            flavorState[flavorKey].enabled = !flavorState[flavorKey].enabled;
+            updateFlavorUI(flavorKey);
+            const state = flavorState[flavorKey].enabled ? 'enabled' : 'disabled';
+            log(`Flavor "${flavorKey}" ${state} (weight: ${flavorState[flavorKey].weight})`);
+            sendFlavorUpdate();
+        }
+
+        function setFlavorWeight(flavorKey, weight) {
+            flavorState[flavorKey].weight = weight;
+            // Update display
+            const slot = document.querySelector(`.flavor-slot[data-flavor="${flavorKey}"]`);
+            if (slot) {
+                slot.querySelector('.flavor-weight-value').textContent = weight.toFixed(1);
+            }
+            // Only send update if flavor is enabled
+            if (flavorState[flavorKey].enabled) {
+                sendFlavorUpdate();
+            }
+        }
+
+        function resetAllFlavors() {
+            for (const key of Object.keys(flavorState)) {
+                flavorState[key].enabled = false;
+                flavorState[key].weight = 0.3;
+                updateFlavorUI(key);
+                // Reset slider and display
+                const slot = document.querySelector(`.flavor-slot[data-flavor="${key}"]`);
+                if (slot) {
+                    slot.querySelector('.slider').value = 0.3;
+                    slot.querySelector('.flavor-weight-value').textContent = '0.3';
+                }
+            }
+        }
+
         // Connect WebSocket
         function connectWebSocket(apiKey, config = {}) {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -1036,6 +1262,7 @@
             ws.onclose = () => {
                 log('WebSocket disconnected');
                 isConnected = false;
+                clearTransitioningUI();
                 updateUI();
             };
 
@@ -1074,6 +1301,7 @@
                     isPlaying = false;
                     log('Music stopped');
                     stopAudioPlayback();
+                    clearTransitioningUI();
                     updateUI();
                     break;
 
@@ -1089,9 +1317,27 @@
                     log('Config updated', 'success');
                     // Only show "Prompt updated" if we actually updated the prompt
                     if (pendingUpdate && (pendingUpdate.prompt || pendingUpdate.negative_prompt)) {
+                        // If not using smooth transitions, clear any stuck indicator
+                        if (!pendingUpdate.smooth_transition) {
+                            clearTransitioningUI();
+                        }
                         log('Prompt updated - music will transition', 'success');
                     }
                     pendingUpdate = null;  // Clear pending update
+                    break;
+
+                case 'crossfade_start':
+                    log(`Crossfading: "${data.from}..." → "${data.to}..."`, 'success');
+                    showToast('Smoothly transitioning...');
+                    // Clear any stuck indicator first, then show
+                    clearTransitioningUI();
+                    document.querySelector('.now-playing').classList.add('transitioning');
+                    onAirDot.classList.add('transitioning');
+                    break;
+
+                case 'crossfade_end':
+                    log('Crossfade complete', 'success');
+                    clearTransitioningUI();
                     break;
 
                 case 'filtered':
@@ -1102,12 +1348,14 @@
                 case 'error':
                     log(`Error: ${data.message}`, 'error');
                     showToast(data.message);
+                    clearTransitioningUI();
                     break;
 
                 case 'disconnected':
                     isConnected = false;
                     isPlaying = false;
                     log('Disconnected from Lyria');
+                    clearTransitioningUI();
                     updateUI();
                     break;
             }
@@ -1376,8 +1624,14 @@
         updateStationBtn.addEventListener('click', () => {
             const prompt = promptInput.value;
             updateNowPlaying(prompt);
-            log(`Updating prompt to: "${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}"...`);
-            sendUpdate(getCurrentConfig());
+            const config = getCurrentConfig();
+            // Add smooth transition if enabled
+            if (smoothTransitions) {
+                config.smooth_transition = true;
+                config.crossfade_duration = 3.0;
+            }
+            log(`Updating prompt to: "${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}"${smoothTransitions ? ' [crossfade]' : ''}...`);
+            sendUpdate(config);
         });
 
         shuffleBtn.addEventListener('click', () => {
@@ -1467,6 +1721,23 @@
             sendUpdate({ music_generation_mode: 'DIVERSITY' });
         });
 
+        // Transition button listeners
+        instantTransitionBtn.addEventListener('click', () => {
+            instantTransitionBtn.classList.add('active');
+            smoothTransitionBtn.classList.remove('active');
+            smoothTransitions = false;
+            localStorage.setItem('smooth_transitions', 'false');
+            log('Switched to instant transitions');
+        });
+
+        smoothTransitionBtn.addEventListener('click', () => {
+            smoothTransitionBtn.classList.add('active');
+            instantTransitionBtn.classList.remove('active');
+            smoothTransitions = true;
+            localStorage.setItem('smooth_transitions', 'true');
+            log('Switched to smooth transitions (crossfade)');
+        });
+
         // Mix button listeners
         muteBassBtn.addEventListener('click', () => {
             muteBassBtn.classList.toggle('active');
@@ -1506,6 +1777,12 @@
                 // Build update config
                 const updateConfig = { prompt: prompt };
 
+                // Add smooth transition flag if enabled
+                if (smoothTransitions) {
+                    updateConfig.smooth_transition = true;
+                    updateConfig.crossfade_duration = 3.0;  // 3 seconds
+                }
+
                 // Update BPM if specified
                 if (bpm) {
                     bpmSlider.value = bpm;
@@ -1521,8 +1798,36 @@
                     updateConfig.density = density / 100;
                 }
 
-                log(`Selecting genre: ${genre} (${bpm || 120} BPM, ${density || 50}% density)...`);
+                // Reset all flavors when switching genres
+                resetAllFlavors();
+                updateConfig.flavors = {};  // Clear flavors on backend
+
+                log(`Selecting genre: ${genre} (${bpm || 120} BPM, ${density || 50}% density)${smoothTransitions ? ' [crossfade]' : ''}...`);
                 sendUpdate(updateConfig);
+            });
+        });
+
+        // Flavor slot event listeners
+        document.querySelectorAll('.flavor-slot').forEach(slot => {
+            const flavorKey = slot.dataset.flavor;
+            const toggle = slot.querySelector('.flavor-toggle');
+            const slider = slot.querySelector('.slider');
+
+            // Toggle button click
+            toggle.addEventListener('click', () => {
+                toggleFlavor(flavorKey);
+            });
+
+            // Weight slider input (live preview)
+            slider.addEventListener('input', (e) => {
+                const weight = parseFloat(e.target.value);
+                slot.querySelector('.flavor-weight-value').textContent = weight.toFixed(1);
+            });
+
+            // Weight slider change (send to server)
+            slider.addEventListener('change', (e) => {
+                const weight = parseFloat(e.target.value);
+                setFlavorWeight(flavorKey, weight);
             });
         });
 
@@ -1544,6 +1849,18 @@
             log('API key loaded - click Connect to start');
         } else {
             updateApiKeyUI(false);
+        }
+
+        // Load saved transition preference
+        const savedTransitionPref = localStorage.getItem('smooth_transitions');
+        if (savedTransitionPref === 'false') {
+            smoothTransitions = false;
+            instantTransitionBtn.classList.add('active');
+            smoothTransitionBtn.classList.remove('active');
+            log('Loaded preference: instant transitions');
+        } else {
+            // Default to smooth (already set in HTML)
+            smoothTransitions = true;
         }
     </script>
 </body>
