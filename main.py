@@ -68,10 +68,7 @@ class MusicSession:
         self._active_prompt: Optional[str] = None  # Track currently playing prompt
         self._ws_send_lock: asyncio.Lock = asyncio.Lock()  # Protect concurrent WebSocket sends
         self.current_config = {
-            "prompt": (
-                "Cinematic score with 100-piece orchestra, soaring strings, heroic brass fanfares, "
-                "thunderous percussion, sweeping crescendos, blockbuster mix crafted for trailer moments"
-            ),
+            "prompt": "Cinematic orchestra, soaring strings, brass fanfares, thunderous drums, epic crescendo, high-quality",
             "bpm": 90,
             "density": 0.5,  # Moderate density (0.1=sparse, 0.9=chaotic)
             "brightness": 0.5,

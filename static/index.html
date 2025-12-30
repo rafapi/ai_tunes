@@ -530,6 +530,12 @@
             border-color: #C4A87C;
         }
 
+        .helper-text {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: rgba(0, 0, 0, 0.55);
+        }
+
         /* Flavor Slots */
         .flavors-grid {
             display: flex;
@@ -841,8 +847,12 @@
                 <!-- Prompt -->
                 <div class="card">
                     <div class="card-header">🎤 Prompt</div>
-                    <textarea class="prompt-textarea" id="promptInput">Cinematic score with 100-piece orchestra, soaring strings, heroic brass fanfares, thunderous percussion, sweeping crescendos, blockbuster mix crafted for trailer moments</textarea>
+                    <textarea class="prompt-textarea" id="promptInput">Cinematic orchestra, soaring strings, brass fanfares, thunderous drums, epic crescendo, high-quality</textarea>
                     <button class="update-btn" id="updateStationBtn">Update Station</button>
+                    <div class="mode-toggle" style="margin-top: 12px;">
+                        <button class="mode-btn active" id="forceResetBtn">Hard Reset on Prompt</button>
+                    </div>
+                    <p class="helper-text">Clears Lyria's context on every prompt switch to prevent bleed-over. Disable for smoother crossfades.</p>
                 </div>
 
                 <!-- Negative Prompt -->
@@ -922,16 +932,14 @@
                 <div class="card">
                     <div class="card-header">✨ Quick Genres</div>
                     <div class="genres-grid" id="genresGrid">
-                        <button class="genre-tag" data-genre="Cinematic Score" data-prompt="Cinematic score with 100-piece orchestra, soaring strings, heroic brass fanfares, thunderous percussion, sweeping crescendos, blockbuster mix crafted for trailer moments" data-bpm="90" data-density="50">Cinematic Score</button>
-                        <button class="genre-tag" data-genre="Beethoven Symphony" data-prompt="Classical orchestra with sweeping strings, bold woodwinds, timpani swells, Beethoven-inspired motifs, dramatic dynamic shifts, captured in a grand concert hall" data-bpm="72" data-density="45">Beethoven Symphony</button>
-                        <button class="genre-tag" data-genre="Ambient Focus" data-prompt="Ambient electronic with slow-evolving pads, airy textures, soft pulses, meditative and weightless, spatial mix designed for mindfulness breathwork" data-bpm="70" data-density="25">Ambient Focus</button>
-                        <button class="genre-tag" data-genre="Lo-Fi Study" data-prompt="Lo-fi hip hop with dusty MPC drums, detuned Rhodes chords, vinyl crackle, mellow and nostalgic, cassette master built for late-night study sessions" data-bpm="85" data-density="40">Lo-Fi Study</button>
-                        <button class="genre-tag" data-genre="Deep House" data-prompt="Deep house with warm Moog bass, four-on-the-floor groove, soulful piano stabs, uplifting and hypnotic, polished analog mix engineered for sunset rooftop DJ sets" data-bpm="124" data-density="55">Deep House</button>
-                        <button class="genre-tag" data-genre="Indie Electronic" data-prompt="Indie electronic with jangly guitars, analog synth arpeggios, tight live drums, dreamy yet danceable, festival-ready mix crafted for indie dance sets" data-bpm="118" data-density="50">Indie Electronic</button>
-                        <button class="genre-tag" data-genre="Warehouse Techno" data-prompt="Warehouse techno with pounding TR-909 kicks, metallic percussion, dark rave stabs, relentless and hypnotic, club-ready master tuned for peak-hour warehouse sets" data-bpm="130" data-density="65">Warehouse Techno</button>
-                        <button class="genre-tag" data-genre="Festival Trance" data-prompt="Festival trance with supersaw leads, rolling basslines, building arpeggios, euphoric breakdowns, pristine festival master crafted for hands-up mainstage moments" data-bpm="138" data-density="60">Festival Trance</button>
-                        <button class="genre-tag" data-genre="Dub" data-prompt="Dub with heavyweight bass, tape-delay skanks, spring reverb splashes, hypnotic and spacious, analog desk mix tailored for late-night sound system sessions" data-bpm="75" data-density="35">Dub</button>
-                        <button class="genre-tag" data-genre="Jazz Fusion" data-prompt="Jazz fusion with Fender Rhodes comping, fretless bass grooves, brushed drums, sophisticated yet soulful, warm studio mix tailored for upscale cocktail lounges" data-bpm="100" data-density="45">Jazz Fusion</button>
+                        <button class="genre-tag" data-genre="Epic Cinematic" data-prompt="Cinematic orchestra, soaring strings, brass fanfares, thunderous drums, epic crescendo, high-quality" data-bpm="90" data-density="50">Epic Cinematic</button>
+                        <button class="genre-tag" data-genre="Dark Score" data-prompt="Dark cinematic, analog synth drones, low cello, ticking percussion, tense, brooding" data-bpm="75" data-density="45">Dark Score</button>
+                        <button class="genre-tag" data-genre="Ambient" data-prompt="Ambient, evolving synth pads, soft pulses, meditative, spacious, ethereal" data-bpm="60" data-density="25">Ambient</button>
+                        <button class="genre-tag" data-genre="Hard Techno" data-prompt="Hard techno, TR-909 kicks, metallic percussion, dark stabs, driving, relentless" data-bpm="135" data-density="65">Hard Techno</button>
+                        <button class="genre-tag" data-genre="Deep House" data-prompt="Deep house, Moog bass, crisp hi-hats, warm pads, groovy, hypnotic" data-bpm="122" data-density="55">Deep House</button>
+                        <button class="genre-tag" data-genre="Lo-Fi Beats" data-prompt="Lo-fi hip hop, MPC drums, Rhodes piano, vinyl crackle, mellow, cozy" data-bpm="85" data-density="40">Lo-Fi Beats</button>
+                        <button class="genre-tag" data-genre="Chillout" data-prompt="Chillout, soft synth pads, gentle downtempo beat, dreamy, peaceful, warm" data-bpm="95" data-density="35">Chillout</button>
+                        <button class="genre-tag" data-genre="World Fusion" data-prompt="World fusion, tabla rhythms, sitar melody, ambient pads, mystical, organic" data-bpm="100" data-density="45">World Fusion</button>
                     </div>
                 </div>
             </div>
@@ -970,6 +978,7 @@
         const changeKeyBtn = document.getElementById('changeKeyBtn');
         const connectBtn = document.getElementById('connectBtn');
         const promptInput = document.getElementById('promptInput');
+        const forceResetBtn = document.getElementById('forceResetBtn');
         const negativePromptInput = document.getElementById('negativePromptInput');
         const updateStationBtn = document.getElementById('updateStationBtn');
         const nowPlayingGenre = document.getElementById('nowPlayingGenre');
@@ -1551,6 +1560,7 @@
         function getCurrentConfig() {
             return {
                 prompt: promptInput.value,
+                force_prompt_reset: forceResetBtn.classList.contains('active'),
                 negative_prompt: negativePromptInput.value,
                 bpm: parseInt(bpmSlider.value),
                 density: parseInt(densitySlider.value) / 100,
@@ -1667,6 +1677,13 @@
             }
             log(`Updating prompt to: "${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}"${smoothTransitions ? ' [crossfade]' : ''}...`);
             sendUpdate(config);
+        });
+
+        forceResetBtn.addEventListener('click', () => {
+            forceResetBtn.classList.toggle('active');
+            const enabled = forceResetBtn.classList.contains('active');
+            log(enabled ? 'Hard reset on prompt enabled' : 'Hard reset on prompt disabled');
+            sendUpdate({ force_prompt_reset: enabled });
         });
 
         shuffleBtn.addEventListener('click', () => {
