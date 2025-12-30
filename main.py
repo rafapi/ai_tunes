@@ -83,6 +83,7 @@ class MusicSession:
             "mute_drums": False,
             "only_bass_and_drums": False,
             "negative_prompt": "No vocals, no glitch artifacts, no harsh cymbal wash",
+            "force_prompt_reset": True,
             "flavors": {},  # Active flavor layers: {"tight_rhythm": {"enabled": True, "weight": 0.3}, ...}
         }
 
@@ -163,7 +164,7 @@ class MusicSession:
             flavors = self.current_config.get("flavors", {})
             for flavor_key, flavor_data in flavors.items():
                 if flavor_data.get("enabled") and flavor_key in FLAVOR_PRESETS:
-                    weight = flavor_data.get("weight", 0.3)
+                    weight = flavor_data.get("weight", 0.6)
                     prompts_list.append(
                         types.WeightedPrompt(text=FLAVOR_PRESETS[flavor_key], weight=weight)
                     )
@@ -198,7 +199,7 @@ class MusicSession:
         flavors = self.current_config.get("flavors", {})
         for flavor_key, flavor_data in flavors.items():
             if flavor_data.get("enabled") and flavor_key in FLAVOR_PRESETS:
-                weight = flavor_data.get("weight", 0.3)
+                weight = flavor_data.get("weight", 0.6)
                 flavor_prompts.append(
                     types.WeightedPrompt(text=FLAVOR_PRESETS[flavor_key], weight=weight)
                 )
@@ -282,6 +283,10 @@ class MusicSession:
         if "scale" in kwargs and kwargs["scale"] != old_scale:
             needs_reset = True
 
+        force_prompt_reset = self.current_config.get("force_prompt_reset", False)
+        if force_prompt_reset:
+            use_crossfade = False  # Hard resets shouldn't try to crossfade
+
         if self.session:
             try:
                 # Apply config changes
@@ -293,6 +298,9 @@ class MusicSession:
                 flavors_changed = "flavors" in kwargs
 
                 if prompt_changed or negative_changed or flavors_changed:
+                    if prompt_changed and force_prompt_reset:
+                        needs_reset = True
+
                     if use_crossfade and prompt_changed and self._active_prompt:
                         # Cancel any existing crossfade before starting new one
                         await self._cancel_crossfade()
