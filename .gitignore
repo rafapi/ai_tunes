@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Local development notes
+AGENTS.md
+CLAUDE.md
+SCRATCHPAD.md
