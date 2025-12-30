@@ -17,12 +17,24 @@ from google.genai import types
 
 # Flavor presets for layered prompt blending
 FLAVOR_PRESETS = {
-    "tight_rhythm": "Tight quantized drums, locked groove, steady beat",
-    "analog_warmth": "Warm analog saturation, tube compression, vinyl texture",
-    "melodic": "Clear melodic hooks, memorable motifs, singable themes",
-    "live_feel": "Live performance energy, human timing, natural dynamics",
-    "atmospheric": "Spacious reverb, evolving pads, ambient textures",
-    "punchy_mix": "Punchy transients, clear separation, professional mixdown",
+    "tight_rhythm": (
+        "Four-on-the-floor kick, precision TR-909 percussion, sidechain pumping bass, tightly locked club groove"
+    ),
+    "analog_warmth": (
+        "Moog bass through tape saturation, Juno pads with gentle wow and flutter, analog console glue, cozy vintage tone"
+    ),
+    "melodic": (
+        "Singable synth lead hook, call-and-response arpeggios, uplifting chord lifts, clearly phrased topline"
+    ),
+    "live_feel": (
+        "Humanized drum fills, expressive dynamics, mic'd room ambience, energetic stage performance vibe"
+    ),
+    "atmospheric": (
+        "Evolving granular pads, shimmering long-tail reverbs, airy field recordings, cinematic widescreen space"
+    ),
+    "punchy_mix": (
+        "Parallel-compressed drums, bright transient shaping, wide stereo imaging, radio-ready master bus polish"
+    ),
 }
 
 # Scale mapping from string to enum
