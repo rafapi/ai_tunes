@@ -74,22 +74,34 @@ class MusicSession:
             "flavors": {},  # Active flavor layers: {"tight_rhythm": {"enabled": True, "weight": 0.3}, ...}
         }
 
-    async def connect(self) -> bool:
-        """Establish connection to Lyria."""
-        try:
-            # connect() returns an async context manager
-            self._context_manager = self.client.aio.live.music.connect(
-                model="models/lyria-realtime-exp"
-            )
-            # Enter the context manager to get the session
-            self.session = await self._context_manager.__aenter__()
-            # Set initial configuration
-            await self._apply_config()
-            await self._apply_prompts()
-            return True
-        except Exception as e:
-            print(f"Failed to connect: {e}")
-            return False
+    async def connect(self, max_retries: int = 3) -> bool:
+        """Establish connection to Lyria with auto-retry on failure."""
+        last_error = None
+
+        for attempt in range(max_retries):
+            try:
+                # connect() returns an async context manager
+                self._context_manager = self.client.aio.live.music.connect(
+                    model="models/lyria-realtime-exp"
+                )
+                # Enter the context manager to get the session
+                self.session = await self._context_manager.__aenter__()
+                # Set initial configuration
+                await self._apply_config()
+                await self._apply_prompts()
+                if attempt > 0:
+                    print(f"Connected successfully after {attempt + 1} attempts")
+                return True
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** (attempt + 1)  # 2s, 4s, 8s
+                    print(f"Connection attempt {attempt + 1} failed: {e}")
+                    print(f"Retrying in {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+
+        print(f"Failed to connect after {max_retries} attempts: {last_error}")
+        return False
 
     async def _apply_config(self) -> None:
         """Apply current music generation config."""
@@ -451,11 +463,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 if data.get("config"):
                     session.current_config.update(data["config"])
 
+                await send({"type": "log", "message": "Connecting to Lyria (may retry if unavailable)..."})
                 if await session.connect():
                     sessions[session_id] = session
                     await send({"type": "connected", "config": session.current_config})
                 else:
-                    await send({"type": "error", "message": "Failed to connect to Lyria"})
+                    await send({"type": "error", "message": "Lyria service unavailable after 3 retries. Please try again later."})
 
             elif action == "play":
                 if session and session.session:
